@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+
 public class DiskManager : MonoBehaviour
 {
     public GameObject[] disks; // 디스크 오브젝트 배열
