@@ -12,7 +12,7 @@ public class DiskManager : MonoBehaviour
     private GameObject diskManager_Eccentricity25;
     private GameObject diskManager_Eccentricity35;
 
-    // Material
+    // Material to apply
     public Material referenceMaterial;
     public Material targetMaterial;
 
@@ -79,18 +79,6 @@ public class DiskManager : MonoBehaviour
             }
         }
     }
-
-
-    Vector3 CalculateTargetDiskColor(Vector3 referenceColor, float adjustmentPercentage)
-    {
-        Vector3 adjustedColor = new Vector3(
-            referenceColor.x + 10,
-            referenceColor.y + 10,
-            referenceColor.z
-        );
-        return adjustedColor;
-    }
-
 
 
 }

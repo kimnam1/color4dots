@@ -13,13 +13,15 @@ public class StateManager : MonoBehaviour
     private ReferenceColor currentReferenceColor; // 현재 reference color
     private int reversalCount; // 현재 reversal count
 
+    private int answerNumber; // 정답 처리 변수
+
+
 
     private TargetDisk currentTargetDisk; // 현재 target(정답) disk
 
 
 
     public TextMeshProUGUI startText; // 시작 텍스트
-    public GameObject testCube;
 
     // Start is called before the first frame update
     void Start()
@@ -68,9 +70,7 @@ public class StateManager : MonoBehaviour
                 {
                     ChangeEccentricityState(EccentricityState.Eccentricity35);
                     SelectRandomTargetDiskNumber();
-
                 }
-
                 // 피실험자 정답 받기
                 HandleDiskSelection();
                 break;
@@ -94,20 +94,22 @@ public class StateManager : MonoBehaviour
                 // 게임 시작으로 변경 시 실행 로직
                 Debug.Log("Game State : Start");
                 startText.gameObject.SetActive(true);
-                testCube.gameObject.SetActive(true);
                 startText.text = "Press Any Button To Start";
+
                 break;
             case GameState.InGame:
                 // 게임 진행으로 변경 시 실행 로직
                 Debug.Log("Game State : In Game");
                 startText.gameObject.SetActive(false);
-                testCube.gameObject.SetActive(false);
+
                 break;
             case GameState.Pause:
                 // 게임 일시 정지로 변경 시 실행 로직
+
                 break;
             case GameState.End:
                 // 게임 종료로 변경 시 실행 로직
+
                 break;
         }
     }
@@ -138,21 +140,20 @@ public class StateManager : MonoBehaviour
         int randomTargetDiskNumber = Random.Range(1, 5);
         Debug.Log("Target Disk Number: " + randomTargetDiskNumber);
 
-        if (randomTargetDiskNumber == 1)
+        switch (randomTargetDiskNumber)
         {
-            currentTargetDisk = TargetDisk.Disk1;
-        }
-        if (randomTargetDiskNumber == 2)
-        {
-            currentTargetDisk = TargetDisk.Disk2;
-        }
-        if (randomTargetDiskNumber == 3)
-        {
-            currentTargetDisk = TargetDisk.Disk3;
-        }
-        if (randomTargetDiskNumber == 4)
-        {
-            currentTargetDisk = TargetDisk.Disk4;
+            case 1:
+                currentTargetDisk = TargetDisk.Disk1;
+                break;
+            case 2:
+                currentTargetDisk = TargetDisk.Disk2;
+                break;
+            case 3:
+                currentTargetDisk = TargetDisk.Disk3;
+                break;
+            case 4:
+                currentTargetDisk = TargetDisk.Disk4;
+                break;
         }
         return randomTargetDiskNumber;
     }
@@ -161,21 +162,25 @@ public class StateManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.A))
         {
+            answerNumber = 1;
             Debug.Log("Disk 1 as answer");
             SelectRandomTargetDiskNumber();
         }
         else if (Input.GetKeyDown(KeyCode.S))
         {
+            answerNumber = 2;
             Debug.Log("Disk 2 as answer");
             SelectRandomTargetDiskNumber();
         }
         else if (Input.GetKeyDown(KeyCode.Z))
         {
+            answerNumber = 3;
             Debug.Log("Disk 3 as answer");
             SelectRandomTargetDiskNumber();
         }
         else if (Input.GetKeyDown(KeyCode.X))
         {
+            answerNumber = 4;
             Debug.Log("Disk 4 as answer");
             SelectRandomTargetDiskNumber();
         }
