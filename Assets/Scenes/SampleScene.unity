@@ -990,7 +990,7 @@ GameObject:
   - component: {fileID: 1329882543}
   - component: {fileID: 1329882542}
   m_Layer: 0
-  m_Name: DiskManager_Position35
+  m_Name: DiskManager_Eccentricity35
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1042,7 +1042,7 @@ GameObject:
   - component: {fileID: 1354700141}
   - component: {fileID: 1354700140}
   m_Layer: 0
-  m_Name: DiskManager_Position10
+  m_Name: DiskManager_Eccentricity10
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1226,7 +1226,7 @@ GameObject:
   - component: {fileID: 1743456290}
   - component: {fileID: 1743456289}
   m_Layer: 0
-  m_Name: DiskManager_Position25
+  m_Name: DiskManager_Eccentricity25
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

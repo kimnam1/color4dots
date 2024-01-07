@@ -5,86 +5,92 @@ using UnityEngine;
 
 public class DiskManager : MonoBehaviour
 {
-    public GameObject[] disks; // 디스크 오브젝트 배열
-    public Color referenceColor = Color.green; // 참조 색상 (녹색)
-    public Color targetColor = Color.red; // 타겟 색상 (빨간색)
+    public StateManager stateManager;
+
+    // Disk Manager Object 변수
+    private GameObject diskManager_Eccentricity10;
+    private GameObject diskManager_Eccentricity25;
+    private GameObject diskManager_Eccentricity35;
+
+    // Material
+    public Material referenceMaterial;
+    public Material targetMaterial;
 
     // Start is called before the first frame update
     void Start()
     {
+        // 디스크 매니저 변수 할당
+        diskManager_Eccentricity10 = GameObject.Find("DiskManager_Eccentricity10");
+        diskManager_Eccentricity25 = GameObject.Find("DiskManager_Eccentricity25");
+        diskManager_Eccentricity35 = GameObject.Find("DiskManager_Eccentricity35");
 
     }
-
-
-    public int viewingAngle;
 
     // Update is called once per frame
     void Update()
     {
-        // 1 = 10도, 2=25도, 3=35도.
-        if (Input.GetKeyDown(KeyCode.Alpha1))
+        // 이심률 변경
+        EccentricityState currentEccentricityState = stateManager.GetCurrentEccentricityState();
+
+        switch (currentEccentricityState)
         {
-            viewingAngle = 10;
-            SetObjectsWithTag("position10", true);
-            SetObjectsWithTag("position25", false);
-            SetObjectsWithTag("position35", false);
-            Debug.Log("Viewing Angle : " + viewingAngle);
-        }
-        if (Input.GetKeyDown(KeyCode.Alpha2))
-        {
-            viewingAngle = 25;
-            SetObjectsWithTag("position10", false);
-            SetObjectsWithTag("position25", true);
-            SetObjectsWithTag("position35", false);
-            Debug.Log("Viewing Angle : " + viewingAngle);
-        }
-        if (Input.GetKeyDown(KeyCode.Alpha3))
-        {
-            viewingAngle = 35;
-            SetObjectsWithTag("position10", false);
-            SetObjectsWithTag("position25", false);
-            SetObjectsWithTag("position35", true);
-            Debug.Log("Viewing Angle : " + viewingAngle);
+            case EccentricityState.Eccentricity10:
+                ActivateDiskManager(diskManager_Eccentricity10);
+                break;
+            case EccentricityState.Eccentricity25:
+                ActivateDiskManager(diskManager_Eccentricity25);
+                break;
+            case EccentricityState.Eccentricity35:
+                ActivateDiskManager(diskManager_Eccentricity35);
+                break;
         }
 
-
+        // 만약 현재 disk manager object가 활성화 되어있다면 디스크 Material을 업데이트한다.
+        if (gameObject.activeInHierarchy)
+        {
+            UpdateDiskMaterials();
+        }
     }
-    void SetObjectsWithTag(string tag, bool isActive)
-    {
-        Transform[] childObjects = GetComponentsInChildren<Transform>(true);
 
-        foreach (Transform child in childObjects)
+    void ActivateDiskManager(GameObject diskManagerToActivate)
+    {
+        // 모든 디스크 비활성화
+        diskManager_Eccentricity10.SetActive(false);
+        diskManager_Eccentricity25.SetActive(false);
+        diskManager_Eccentricity35.SetActive(false);
+
+        // 현재 디스크 활성화
+        diskManagerToActivate.SetActive(true);
+    }
+
+    void UpdateDiskMaterials()
+    {
+        int targetDiskNumber = (int)stateManager.GetCurrentTargetDisk() + 1; // 열거형 값을 숫자로 변환하고 1을 더함
+
+
+        // 모든 자식 디스크에 대해 루프
+        for (int i = 1; i <= 4; i++)
         {
-            if (child.CompareTag(tag))
+            GameObject disk = transform.Find("Disk" + i).gameObject;
+            if (disk != null)
             {
-                child.gameObject.SetActive(isActive);
+                Material diskMaterial = (i == targetDiskNumber) ? targetMaterial : referenceMaterial;
+                disk.GetComponent<Renderer>().material = diskMaterial;
             }
         }
     }
 
-    void SetRandomDiskColor()
+
+    Vector3 CalculateTargetDiskColor(Vector3 referenceColor, float adjustmentPercentage)
     {
-        // 모든 디스크를 참조 색상으로 설정
-        foreach (GameObject disk in disks)
-        {
-            SetDiskColor(disk, referenceColor);
-        }
-
-        // 랜덤하게 하나의 디스크를 선택
-        int randomIndex = Random.Range(0, disks.Length);
-
-        // 선택된 디스크를 타겟 색상으로 설정
-        SetDiskColor(disks[randomIndex], targetColor);
+        Vector3 adjustedColor = new Vector3(
+            referenceColor.x + 10,
+            referenceColor.y + 10,
+            referenceColor.z
+        );
+        return adjustedColor;
     }
 
-    void SetDiskColor(GameObject disk, Color color)
-    {
-        Renderer diskRenderer = disk.GetComponent<Renderer>();
-        if (diskRenderer != null)
-        {
-            diskRenderer.material.color = color;
-        }
-    }
 
 
 }
