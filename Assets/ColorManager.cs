@@ -5,14 +5,14 @@ using UnityEngine;
 public class ColorManager : MonoBehaviour
 {
     // 조정할 값(10퍼센트에 해당하는 값)
-    public float adjustValueDKLx;
-    public float adjustValueDKLy;
+    public float adjustValueDKLX;
+    public float adjustValueDKLY;
 
     // 색 입힐 Materials
     public Material referenceMaterial;
     public Material targetMaterial;
 
-    // Current Reference Color Coordinate
+    // Current Reference Colors Coordinate
     public List<Vector3> referenceColorsDKL;
 
     void Start()
@@ -22,7 +22,12 @@ public class ColorManager : MonoBehaviour
 
         // Reference Color 선언
         referenceColorsDKL.Add(new Vector3(100.0f, 100.0f, 100.0f));
-        // 추가 가능
+        referenceColorsDKL.Add(new Vector3(100.0f, 100.0f, 100.0f));
+        referenceColorsDKL.Add(new Vector3(100.0f, 100.0f, 100.0f));
+        referenceColorsDKL.Add(new Vector3(100.0f, 100.0f, 100.0f));
+        referenceColorsDKL.Add(new Vector3(100.0f, 100.0f, 100.0f));
+
+        // 추가 가능 : 추가 시 StateManager의 RunSinglTrial에서 개수에 맞게 변경해줘야 함.
 
         // referenceColorsDKL List 사용.
         foreach (Vector3 color in referenceColorsDKL)
@@ -30,7 +35,7 @@ public class ColorManager : MonoBehaviour
             Debug.Log("Colors in DKL: " + color);
         }
     }
-    Vector3 RGBtoXYZ(Vector3 rgb)
+    public Vector3 RGBtoXYZ(Vector3 rgb)
     {
         Matrix4x4 rgb2xyz = new Matrix4x4();
         rgb2xyz.SetRow(0, new Vector4(0.4124564f, 0.3575761f, 0.1804375f, 0));
@@ -40,7 +45,7 @@ public class ColorManager : MonoBehaviour
 
         return rgb2xyz.MultiplyVector(rgb);
     }
-    Vector3 XYZtoLMS(Vector3 xyz)
+    public Vector3 XYZtoLMS(Vector3 xyz)
     {
         Matrix4x4 xyz2lms = new Matrix4x4();
         xyz2lms.SetRow(0, new Vector4(0.8951f, 0.2664f, -0.1614f, 0));
@@ -50,7 +55,7 @@ public class ColorManager : MonoBehaviour
 
         return xyz2lms.MultiplyVector(xyz);
     }
-    Vector3 LMStoDKL(Vector3 lms)
+    public Vector3 LMStoDKL(Vector3 lms)
     {
         Matrix4x4 lms2dkl = new Matrix4x4();
         lms2dkl.SetRow(0, new Vector4(1, -1, 0, 0));
@@ -60,7 +65,7 @@ public class ColorManager : MonoBehaviour
 
         return lms2dkl.MultiplyVector(lms);
     }
-    Vector3 DKLtoLMS(Vector3 dkl)
+    public Vector3 DKLtoLMS(Vector3 dkl)
     {
         Matrix4x4 dkl2lms = new Matrix4x4();
         dkl2lms.SetRow(0, new Vector4(0.5f, 0, 0.5f, 0));
@@ -70,7 +75,7 @@ public class ColorManager : MonoBehaviour
 
         return dkl2lms.MultiplyVector(dkl);
     }
-    Vector3 LMStoXYZ(Vector3 lms)
+    public Vector3 LMStoXYZ(Vector3 lms)
     {
         Matrix4x4 lms2xyz = new Matrix4x4();
         lms2xyz.SetRow(0, new Vector4(0.9869929f, -0.1470543f, 0.1599627f, 0));
@@ -80,7 +85,7 @@ public class ColorManager : MonoBehaviour
 
         return lms2xyz.MultiplyVector(lms);
     }
-    Vector3 XYZtoRGB(Vector3 xyz)
+    public Vector3 XYZtoRGB(Vector3 xyz)
     {
         Matrix4x4 xyz2rgb = new Matrix4x4();
         xyz2rgb.SetRow(0, new Vector4(3.240455f, -1.537139f, -0.4985315f, 0));
@@ -90,17 +95,28 @@ public class ColorManager : MonoBehaviour
 
         return xyz2rgb.MultiplyVector(xyz);
     }
-
-    Vector3 CalculateTargetDiskColor(Vector3 referenceColor)
+    public Vector3 DKLtoRGB(Vector3 xyz)
     {
-        adjustValueDKLx = 10.0f;
-        adjustValueDKLy = 10.0f;
+        return XYZtoRGB(LMStoXYZ(DKLtoLMS(xyz)));
+    }
+
+    public Vector3 CalculateTargetColor(Vector3 referenceColor)
+    {
+        adjustValueDKLX = 10.0f;
+        adjustValueDKLY = 10.0f;
 
         Vector3 adjustedColor = new Vector3(
-            referenceColor.x + adjustValueDKLx,
-            referenceColor.y + adjustValueDKLy,
+            referenceColor.x + adjustValueDKLX,
+            referenceColor.y + adjustValueDKLY,
             referenceColor.z
         );
         return adjustedColor;
+    }
+
+    public void SetMaterialColor(Material materialToSet, Vector3 color)
+    {
+        Color colorToApply = new Color(color.x, color.y, color.z);
+
+        materialToSet.color = colorToApply;
     }
 }

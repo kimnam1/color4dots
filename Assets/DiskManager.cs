@@ -23,7 +23,6 @@ public class DiskManager : MonoBehaviour
         diskManager_Eccentricity10 = GameObject.Find("DiskManager_Eccentricity10");
         diskManager_Eccentricity25 = GameObject.Find("DiskManager_Eccentricity25");
         diskManager_Eccentricity35 = GameObject.Find("DiskManager_Eccentricity35");
-
     }
 
     // Update is called once per frame
@@ -61,6 +60,14 @@ public class DiskManager : MonoBehaviour
 
         // 현재 디스크 활성화
         diskManagerToActivate.SetActive(true);
+    }
+
+    public void DeactivateDiskManagers()
+    {
+        // 모든 디스크 비활성화
+        diskManager_Eccentricity10.SetActive(false);
+        diskManager_Eccentricity25.SetActive(false);
+        diskManager_Eccentricity35.SetActive(false);
     }
 
     void UpdateDiskMaterials()
