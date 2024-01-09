@@ -21,19 +21,20 @@ public class ColorManager : MonoBehaviour
         referenceColorsDKL = new List<Vector3>();
 
         // Reference Color 선언
-        referenceColorsDKL.Add(new Vector3(100.0f, 100.0f, 100.0f));
-        referenceColorsDKL.Add(new Vector3(100.0f, 100.0f, 100.0f));
-        referenceColorsDKL.Add(new Vector3(100.0f, 100.0f, 100.0f));
-        referenceColorsDKL.Add(new Vector3(100.0f, 100.0f, 100.0f));
-        referenceColorsDKL.Add(new Vector3(100.0f, 100.0f, 100.0f));
+        referenceColorsDKL.Add(new Vector3(93.0f, -116.0f, 121.0f));
+        referenceColorsDKL.Add(new Vector3(-119.8981253f, -348.1355644f, 370.4842407f));
+        referenceColorsDKL.Add(new Vector3(1.06440418f, 237.1414263f, 12.88814752f));
+        referenceColorsDKL.Add(new Vector3(-26.30661874f, -464.681383f, 492.4826335f));
+        referenceColorsDKL.Add(new Vector3(100.0f, 200.0f, 100.0f));
 
         // 추가 가능 : 추가 시 StateManager의 RunSinglTrial에서 개수에 맞게 변경해줘야 함.
 
-        // referenceColorsDKL List 사용.
-        foreach (Vector3 color in referenceColorsDKL)
-        {
-            Debug.Log("Colors in DKL: " + color);
-        }
+
+    }
+
+    void Update()
+    {
+
     }
     public Vector3 RGBtoXYZ(Vector3 rgb)
     {
@@ -97,19 +98,27 @@ public class ColorManager : MonoBehaviour
     }
     public Vector3 DKLtoRGB(Vector3 xyz)
     {
+        Debug.Log("(ColorManager.cs)DKL " + xyz + " is Changed to RGB!!" + ", RGB:" + XYZtoRGB(LMStoXYZ(DKLtoLMS(xyz))));
         return XYZtoRGB(LMStoXYZ(DKLtoLMS(xyz)));
+    }
+
+    public Vector3 RGBtoDKL(Vector3 rgb)
+    {
+        Debug.Log("(ColorManager.cs)RGB " + rgb + "is Changed to DKL!!" + ", DKL:" + LMStoDKL(XYZtoLMS(RGBtoXYZ(rgb))));
+        return LMStoDKL(XYZtoLMS(RGBtoXYZ(rgb)));
     }
 
     public Vector3 CalculateTargetColor(Vector3 referenceColor)
     {
-        adjustValueDKLX = 10.0f;
-        adjustValueDKLY = 10.0f;
+        adjustValueDKLX = 0.0f;
+        adjustValueDKLY = 0.0f;
 
         Vector3 adjustedColor = new Vector3(
-            referenceColor.x + adjustValueDKLX,
-            referenceColor.y + adjustValueDKLY,
+            referenceColor.x - 50.0f,
+            referenceColor.y,
             referenceColor.z
         );
+        Debug.Log("(ColorManager.cs/CalculateTargetColor)Calculate Target Color: Target Color is " + adjustedColor);
         return adjustedColor;
     }
 

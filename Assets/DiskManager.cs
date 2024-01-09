@@ -28,21 +28,21 @@ public class DiskManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        // 이심률 변경
-        EccentricityState currentEccentricityState = stateManager.GetCurrentEccentricityState();
+        // // 이심률 변경
+        // EccentricityState currentEccentricityState = stateManager.GetCurrentEccentricityState();
 
-        switch (currentEccentricityState)
-        {
-            case EccentricityState.Eccentricity10:
-                ActivateDiskManager(diskManager_Eccentricity10);
-                break;
-            case EccentricityState.Eccentricity25:
-                ActivateDiskManager(diskManager_Eccentricity25);
-                break;
-            case EccentricityState.Eccentricity35:
-                ActivateDiskManager(diskManager_Eccentricity35);
-                break;
-        }
+        // switch (currentEccentricityState)
+        // {
+        //     case EccentricityState.Eccentricity10:
+        //         ActivateDiskManager(diskManager_Eccentricity10);
+        //         break;
+        //     case EccentricityState.Eccentricity25:
+        //         ActivateDiskManager(diskManager_Eccentricity25);
+        //         break;
+        //     case EccentricityState.Eccentricity35:
+        //         ActivateDiskManager(diskManager_Eccentricity35);
+        //         break;
+        // }
 
         // 만약 현재 disk manager object가 활성화 되어있다면 디스크 Material을 업데이트한다.
         if (gameObject.activeInHierarchy)
@@ -51,24 +51,49 @@ public class DiskManager : MonoBehaviour
         }
     }
 
-    void ActivateDiskManager(GameObject diskManagerToActivate)
-    {
-        // 모든 디스크 비활성화
-        diskManager_Eccentricity10.SetActive(false);
-        diskManager_Eccentricity25.SetActive(false);
-        diskManager_Eccentricity35.SetActive(false);
+    // public void ActivateDiskManager(GameObject diskManagerToActivate)
+    // {
+    //     // 모든 디스크 비활성화
+    //     diskManager_Eccentricity10.SetActive(false);
+    //     diskManager_Eccentricity25.SetActive(false);
+    //     diskManager_Eccentricity35.SetActive(false);
 
-        // 현재 디스크 활성화
-        diskManagerToActivate.SetActive(true);
-    }
+    //     // 현재 디스크 활성화
+    //     diskManagerToActivate.SetActive(true);
+    // }
 
-    public void DeactivateDiskManagers()
-    {
-        // 모든 디스크 비활성화
-        diskManager_Eccentricity10.SetActive(false);
-        diskManager_Eccentricity25.SetActive(false);
-        diskManager_Eccentricity35.SetActive(false);
-    }
+
+    // public void ActivateCurrentEccentricityDiskManager()
+    // {
+    //     // 모든 디스크 비활성화
+    //     diskManager_Eccentricity10.SetActive(false);
+    //     diskManager_Eccentricity25.SetActive(false);
+    //     diskManager_Eccentricity35.SetActive(false);
+
+    //     // Current Eccentricity에 맞는 디스크 활성화.
+    //     switch (stateManager.GetCurrentEccentricityState())
+    //     {
+    //         case EccentricityState.Eccentricity10:
+    //             Debug.Log("DiskManager: Current Eccentricity " + stateManager.GetCurrentEccentricityState() + "is Activated");
+    //             diskManager_Eccentricity10.SetActive(true);
+    //             break;
+    //         case EccentricityState.Eccentricity25:
+    //             Debug.Log("DiskManager: Current Eccentricity " + stateManager.GetCurrentEccentricityState());
+    //             diskManager_Eccentricity25.SetActive(true);
+    //             break;
+    //         case EccentricityState.Eccentricity35:
+    //             Debug.Log("DiskManager: Current Eccentricity is " + stateManager.GetCurrentEccentricityState());
+    //             diskManager_Eccentricity35.SetActive(true);
+    //             break;
+    //     }
+    // }
+    // public void DeactivateDiskManagers()
+    // {
+    //     // 모든 디스크 비활성화
+    //     diskManager_Eccentricity10.SetActive(false);
+    //     diskManager_Eccentricity25.SetActive(false);
+    //     diskManager_Eccentricity35.SetActive(false);
+    // }
 
     void UpdateDiskMaterials()
     {
@@ -86,6 +111,4 @@ public class DiskManager : MonoBehaviour
             }
         }
     }
-
-
 }

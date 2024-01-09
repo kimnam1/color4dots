@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+
 using System.Text;
 using System.ComponentModel.Design;
 using JetBrains.Annotations;
@@ -9,7 +10,6 @@ using JetBrains.Annotations;
 public class StateManager : MonoBehaviour
 {
     public ColorManager colorManager; // Color Manager Script 불러오기
-    public DiskManager diskManager; // Disk Manager Script 불러오기
     private GameState currentGameState; // 현재 게임 상태를 추적하는 변수
     private EccentricityState currentEccentricityState; // 현재 이심률 상태를 추적하는 변수
     private DimensionState currentDimensionState; // 현재 변경할 color space 축 상태를 추적하는 변수
@@ -18,7 +18,20 @@ public class StateManager : MonoBehaviour
 
     private int answerNumber; // 정답 처리 변수
     private TargetDisk currentTargetDisk; // 현재 target(정답) disk
-    public int numberOfTrials = 10; // 실험 trial 설정.
+    public int numberOfTrials; // 실험 trial 설정.
+
+    // Disk Manager Object 변수
+    private GameObject diskManager_Eccentricity10;
+    private GameObject diskManager_Eccentricity25;
+    private GameObject diskManager_Eccentricity35;
+
+    // Material to apply
+    public Material referenceMaterial;
+    public Material targetMaterial;
+
+    [SerializeField]
+    // Disk Showing Time(Unity의 Inspector창에서 조절할 것)
+    private float diskShowingTime = 0.5f; // 기본값 0.5초
 
 
 
@@ -27,12 +40,12 @@ public class StateManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        // 디스크 매니저 변수 할당
+        diskManager_Eccentricity10 = GameObject.Find("DiskManager_Eccentricity10");
+        diskManager_Eccentricity25 = GameObject.Find("DiskManager_Eccentricity25");
+        diskManager_Eccentricity35 = GameObject.Find("DiskManager_Eccentricity35");
         ChangeGameState(GameState.Start);
-
-        for (int i = 0; i < numberOfTrials; i++)
-        {
-            RunSingleTrial();
-        }
+        StartCoroutine(RunExperiment());
     }
 
     // Update is called once per frame
@@ -53,20 +66,19 @@ public class StateManager : MonoBehaviour
                 if (Input.GetKeyDown(KeyCode.Q))
                 {
                     ChangeEccentricityState(EccentricityState.Eccentricity10);
-                    SelectRandomTargetDiskNumber();
                 }
                 if (Input.GetKeyDown(KeyCode.W))
                 {
                     ChangeEccentricityState(EccentricityState.Eccentricity25);
-                    SelectRandomTargetDiskNumber();
-
                 }
                 if (Input.GetKeyDown(KeyCode.E))
                 {
                     ChangeEccentricityState(EccentricityState.Eccentricity35);
-                    SelectRandomTargetDiskNumber();
                 }
-                // 피실험자 정답 받기
+                break;
+            case GameState.WaitingForResponse:
+                // 응답 대기 상태
+                DeactivateDiskManagers();
                 HandleDiskSelection();
                 break;
             case GameState.Pause:
@@ -98,6 +110,9 @@ public class StateManager : MonoBehaviour
                 startText.gameObject.SetActive(false);
 
                 break;
+            case GameState.WaitingForResponse:
+                // Response Waiting 
+                break;
             case GameState.Pause:
                 // 게임 일시 정지로 변경 시 실행 로직
 
@@ -108,7 +123,13 @@ public class StateManager : MonoBehaviour
                 break;
         }
     }
-
+    public void DeactivateDiskManagers()
+    {
+        // 모든 디스크 비활성화
+        diskManager_Eccentricity10.SetActive(false);
+        diskManager_Eccentricity25.SetActive(false);
+        diskManager_Eccentricity35.SetActive(false);
+    }
     public void ChangeEccentricityState(EccentricityState newEccentricityState)
     {
         currentEccentricityState = newEccentricityState;
@@ -129,7 +150,6 @@ public class StateManager : MonoBehaviour
                 break;
         }
     }
-
     int SelectRandomTargetDiskNumber()
     {
         int randomTargetDiskNumber = Random.Range(1, 5);
@@ -152,7 +172,6 @@ public class StateManager : MonoBehaviour
         }
         return randomTargetDiskNumber;
     }
-
     int currentTargetDiskNumber()
     {
         int targetDiskNumber = 0;
@@ -179,95 +198,146 @@ public class StateManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.A))
         {
             answerNumber = 1;
-            Debug.Log("Disk 1 as answer");
+            Debug.Log("(StateManage.cs/HandleDiskSelection)Disk 1 as answer");
             ProcessAnswer();
-            SelectRandomTargetDiskNumber();
+            ChangeGameState(GameState.InGame);
         }
         else if (Input.GetKeyDown(KeyCode.S))
         {
             answerNumber = 2;
-            Debug.Log("Disk 2 as answer");
+            Debug.Log("(StateManage.cs/HandleDiskSelection)Disk 2 as answer");
             ProcessAnswer();
-            SelectRandomTargetDiskNumber();
+            ChangeGameState(GameState.InGame);
         }
         else if (Input.GetKeyDown(KeyCode.Z))
         {
             answerNumber = 3;
-            Debug.Log("Disk 3 as answer");
+            Debug.Log("(StateManage.cs/HandleDiskSelection)Disk 3 as answer");
             ProcessAnswer();
-            SelectRandomTargetDiskNumber();
+            ChangeGameState(GameState.InGame);
         }
         else if (Input.GetKeyDown(KeyCode.X))
         {
             answerNumber = 4;
-            Debug.Log("Disk 4 as answer");
+            Debug.Log("(StateManage.cs/HandleDiskSelection)Disk 4 as answer");
             ProcessAnswer();
-            SelectRandomTargetDiskNumber();
+            ChangeGameState(GameState.InGame);
         }
     }
 
     IEnumerator RunSingleTrial()
     {
-        // 디스크 1개 설정
+        // 랜덤 디스크 1개 설정
         int randomTargetDiskNumber = SelectRandomTargetDiskNumber();
-        Vector3 trialReferenceColor = new Vector3(0, 0, 0);
+        Vector3 trialReferenceColorInRGB = new Vector3(1.06440418f, 237.1414263f, 12.88814752f);
 
         // reference color 불러오기
         switch (currentReferenceColor)
         {
             case ReferenceColor.ReferenceColor1:
-                trialReferenceColor = colorManager.DKLtoRGB(colorManager.referenceColorsDKL[0]);
+                trialReferenceColorInRGB = colorManager.DKLtoRGB(colorManager.referenceColorsDKL[0]);
                 break;
             case ReferenceColor.ReferenceColor2:
-                trialReferenceColor = colorManager.DKLtoRGB(colorManager.referenceColorsDKL[1]);
+                trialReferenceColorInRGB = colorManager.DKLtoRGB(colorManager.referenceColorsDKL[1]);
                 break;
             case ReferenceColor.ReferenceColor3:
-                trialReferenceColor = colorManager.DKLtoRGB(colorManager.referenceColorsDKL[2]);
+                trialReferenceColorInRGB = colorManager.DKLtoRGB(colorManager.referenceColorsDKL[2]);
                 break;
             case ReferenceColor.ReferenceColor4:
-                trialReferenceColor = colorManager.DKLtoRGB(colorManager.referenceColorsDKL[3]);
+                trialReferenceColorInRGB = colorManager.DKLtoRGB(colorManager.referenceColorsDKL[3]);
                 break;
             case ReferenceColor.ReferenceColor5:
-                trialReferenceColor = colorManager.DKLtoRGB(colorManager.referenceColorsDKL[4]);
+                trialReferenceColorInRGB = colorManager.DKLtoRGB(colorManager.referenceColorsDKL[4]);
                 break;
         }
 
         // target color 계산
-        Vector3 targetColorInRGB = colorManager.XYZtoRGB(colorManager.LMStoXYZ(colorManager.DKLtoLMS(colorManager.CalculateTargetColor(trialReferenceColor))));
+        Vector3 targetColorInRGB = colorManager.DKLtoRGB(colorManager.CalculateTargetColor(colorManager.RGBtoDKL(trialReferenceColorInRGB)));
+
+        // 이심률 변경
+        EccentricityState currentEccentricityState = GetCurrentEccentricityState();
+        switch (currentEccentricityState)
+        {
+            case EccentricityState.Eccentricity10:
+                ActivateCurrentEccentricityDiskManager();
+                break;
+            case EccentricityState.Eccentricity25:
+                ActivateCurrentEccentricityDiskManager();
+                break;
+            case EccentricityState.Eccentricity35:
+                ActivateCurrentEccentricityDiskManager();
+                break;
+        }
 
         // ref mat에 색 입히기
-        colorManager.SetMaterialColor(colorManager.referenceMaterial, trialReferenceColor);
+        colorManager.SetMaterialColor(colorManager.referenceMaterial, trialReferenceColorInRGB);
+        Debug.Log("(RunSigleTrial)Reference Color: " + trialReferenceColorInRGB);
 
         // target mat에 색 입히기
         colorManager.SetMaterialColor(colorManager.targetMaterial, targetColorInRGB);
+        Debug.Log("(RunSigleTrial)Target Color: " + targetColorInRGB);
 
-        // 500ms 보여주기
-        yield return new WaitForSeconds(0.5f);
+        // 500ms 보여주고 끄기(끄는건 WaitingForResonse에서 자동 동작함.)
+        yield return new WaitForSeconds(diskShowingTime);
+        ChangeGameState(GameState.WaitingForResponse);
 
+        // 피실험자 응답 기다리기
+        yield return new WaitUntil(() => currentGameState != GameState.WaitingForResponse);
 
-        // 정답 받기와 정오답 판별은 HandleDiskSelection에서 하고 있음.
         // trial 횟수와 reversal 업데이트 필요.
 
         // CSV 저장
 
     }
+    IEnumerator RunExperiment()
+    {
+        for (int i = 0; i < numberOfTrials; i++)
+        {
+            yield return StartCoroutine(RunSingleTrial());
+        }
+    }
+    public void ActivateCurrentEccentricityDiskManager()
+    {
+        // 모든 디스크 비활성화
+        diskManager_Eccentricity10.SetActive(false);
+        diskManager_Eccentricity25.SetActive(false);
+        diskManager_Eccentricity35.SetActive(false);
 
+        // Current Eccentricity에 맞는 디스크 활성화.
+        switch (GetCurrentEccentricityState())
+        {
+            case EccentricityState.Eccentricity10:
+                Debug.Log("(DiskManager.cs/ActivateCurrentEccentricityDiskManager) Current Eccentricity " + GetCurrentEccentricityState() + " is Activated");
+                diskManager_Eccentricity10.SetActive(true);
+                break;
+            case EccentricityState.Eccentricity25:
+                Debug.Log("(DiskManager.cs/ActivateCurrentEccentricityDiskManager) Current Eccentricity " + GetCurrentEccentricityState());
+                diskManager_Eccentricity25.SetActive(true);
+                break;
+            case EccentricityState.Eccentricity35:
+                Debug.Log("(DiskManager.cs/ActivateCurrentEccentricityDiskManager) Current Eccentricity is " + GetCurrentEccentricityState());
+                diskManager_Eccentricity35.SetActive(true);
+                break;
+        }
+    }
     void ProcessAnswer()
     {
         bool isCorrect = currentTargetDiskNumber() == answerNumber;
-        Debug.Log(isCorrect ? "Correct Answer" : "Wrong Answer");
+        Debug.Log(isCorrect ? "(ProcessAnswer)Correct Answer" : "(ProcessAnswer)Wrong Answer");
 
         // 여기서 필요한 추가 로직을 구현합니다. 예: 점수 업데이트, 다음 시행 준비 등
 
         // CSV 파일에 저장하는 로직
         SaveToCSV(answerNumber, isCorrect);
 
-        // 다음 타겟 디스크 선택
-        SelectRandomTargetDiskNumber();
+        // 다음 시행을 위한 상태 변경
+        ChangeGameState(GameState.InGame);
     }
 
     void SaveToCSV(int answer, bool isCorrect)
     {
+        string filePath = Path.Combine(Application.persistentDataPath, "experiment_results.csv");
+
         // CSV 파일에 데이터 저장 로직 구현
         // 예: File.AppendAllText("경로", "데이터");
     }
@@ -290,6 +360,7 @@ public enum GameState
 {
     Start,
     InGame,
+    WaitingForResponse,
     Pause,
     End
 }
