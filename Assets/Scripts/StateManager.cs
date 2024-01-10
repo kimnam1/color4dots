@@ -25,14 +25,13 @@ public class StateManager : MonoBehaviour
     private int currentEccentricityTrialsCompleted = 0; // Eccentricity 별 현재 진행된 trial 수
     private int totalTrialsCompleted = 0; // 총 완료한 시행 횟수
 
-
-
     // Material to apply
     public Material referenceMaterial;
     public Material targetMaterial;
 
     private string csvFilePath;
     private bool isFirstEntry = true;
+    private bool isAnswered = false; // 현재 답변을 한지 안한지 체크
 
 
     // Disk Showing Time(Unity의 Inspector창에서 조절할 것)
@@ -85,7 +84,12 @@ public class StateManager : MonoBehaviour
             case GameState.WaitingForResponse:
                 // 응답 대기 상태
                 DeactivateDiskManagers();
-                HandleDiskSelection();
+                if ((Input.GetKeyDown(KeyCode.A)) || (Input.GetKeyDown(KeyCode.S)) || (Input.GetKeyDown(KeyCode.Z)) || (Input.GetKeyDown(KeyCode.X)))
+                {
+                    isAnswered = true;
+                    ChangeGameState(GameState.InGame);
+                }
+
                 break;
             case GameState.Pause:
                 // 일시 정지 상태에서의 로직
@@ -117,7 +121,7 @@ public class StateManager : MonoBehaviour
 
                 break;
             case GameState.WaitingForResponse:
-                // Response Waiting 
+                // Response Waiting으로 변경 시 실행 로직
                 break;
             case GameState.Pause:
                 // 게임 일시 정지로 변경 시 실행 로직
@@ -148,10 +152,12 @@ public class StateManager : MonoBehaviour
                 break;
             case EccentricityState.Eccentricity_25:
                 // Eccentricitiy 25로 변경될 때 실행 로직
+                StartCoroutine(RunExperiment());
                 Debug.Log("Eccentricity Changed to 25");
                 break;
             case EccentricityState.Eccentricity_35:
                 // Eccentricitiy 35로 변경될 때 실행 로직
+                StartCoroutine(RunExperiment());
                 Debug.Log("Eccentricity Changed to 35");
                 break;
         }
@@ -255,10 +261,6 @@ public class StateManager : MonoBehaviour
         // target color 계산
         targetColorInRGB = colorManager.DKLtoRGB(colorManager.CalculateTargetColor(colorManager.RGBtoDKL(referenceColorInRGB)));
 
-        // 이심률 변경
-        EccentricityState currentEccentricityState = GetCurrentEccentricityState();
-        ActivateCurrentEccentricityDiskManager();
-
         // ref mat에 색 입히기
         colorManager.SetMaterialColor(colorManager.referenceMaterial, referenceColorInRGB);
         Debug.Log("(RunSigleTrial)Reference Color: " + referenceColorInRGB);
@@ -267,26 +269,31 @@ public class StateManager : MonoBehaviour
         colorManager.SetMaterialColor(colorManager.targetMaterial, targetColorInRGB);
         Debug.Log("(RunSigleTrial)Target Color: " + targetColorInRGB);
 
-        bool isAnswered = false;
+        // 이심률 변경 및 해당하는 디스크 켜기
+        EccentricityState currentEccentricityState = GetCurrentEccentricityState();
+        ActivateCurrentEccentricityDiskManager();
 
-        // 시간 내에 답변을 해버릴 경우
+        // 하나의 trial 시작이므로 isAnswered = false;
+        isAnswered = false;
+
+        // 디스크가 사라지기 전에 답변을 해버릴 경우
         float elapsedTime = 0f;
         while (elapsedTime < diskShowingTime)
         {
             elapsedTime += Time.deltaTime;
 
-            // 답변을 받으면 즉시 다음 게임으로 진행
+            // 답변을 받으면 isAnswered = true
             if (!isAnswered && (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.Z) || Input.GetKeyDown(KeyCode.X)))
             {
                 isAnswered = true; // 답변이 들어왔음을 표시
-                int answerNumber = GetAnswerNumberFromInput(); // 어떤 답변을 눌렀는지 확인
-                ProcessAnswer(answerNumber); // 답변 처리
-                ChangeGameState(GameState.InGame);
+                DeactivateDiskManagers(); // 디스크 끄기
+                HandleDiskSelection(); // 인풋 답으로 처리
+                yield return new WaitForSeconds(1.0f); // 1초 기다리기
             }
 
             yield return null;
         }
-        // 시간 초과 후 답변을 받지 못한 경우 WaitingForResponse 상태로 전환
+        // 디스크 사라진 후 답변을 받지 못한 경우 WaitingForResponse 상태로 전환
         if (!isAnswered)
         {
             ChangeGameState(GameState.WaitingForResponse);
@@ -338,6 +345,10 @@ public class StateManager : MonoBehaviour
         // Eccentricity 변경 후 관련 변수 초기화 또는 업데이트
         currentEccentricityTrialsCompleted = 0;
         totalTrialsCompleted += numberOfTrialsPerEccentricity;
+
+        // 현재 실행 중인 코루틴 중지 후 Eccentricity 변경하고 다시 실행(Eccentricity 변경 타이밍에 답변 기다리지 않는 문제 해결 목적)
+        StopCoroutine(RunSingleTrial());
+        StartCoroutine(RunSingleTrial());
     }
 
     void ProcessAnswer(int selectedAnswerNumber)
