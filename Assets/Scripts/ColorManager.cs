@@ -21,7 +21,7 @@ public class ColorManager : MonoBehaviour
         referenceColorsDKL = new List<Vector3>();
 
         // Reference Color 선언
-        referenceColorsDKL.Add(new Vector3(-81.45810198632f, -101.67958f, 315.993f));
+        referenceColorsDKL.Add(new Vector3(100.0f, 0.0f, 100.0f));
         referenceColorsDKL.Add(new Vector3(-119.8981253f, -348.1355644f, 370.4842407f));
         referenceColorsDKL.Add(new Vector3(1.06440418f, 237.1414263f, 12.88814752f));
         referenceColorsDKL.Add(new Vector3(-26.30661874f, -464.681383f, 492.4826335f));
@@ -110,7 +110,7 @@ public class ColorManager : MonoBehaviour
 
     public Vector3 CalculateTargetColor(Vector3 referenceColor)
     {
-        adjustValueDKLX = 15.455403594885f;
+        adjustValueDKLX = 20f;
         adjustValueDKLY = 0.0f;
 
         Vector3 adjustedColor = new Vector3(
@@ -122,9 +122,9 @@ public class ColorManager : MonoBehaviour
         return adjustedColor;
     }
 
-    public void SetMaterialColor(Material materialToSet, Vector3 color)
+    public void SetMaterialColor(Material materialToSet, Vector3 colorInRGB)
     {
-        Color colorToApply = new Color(color.x, color.y, color.z);
+        Color colorToApply = new Color(colorInRGB.x, colorInRGB.y, colorInRGB.z);
 
         materialToSet.color = colorToApply;
     }
