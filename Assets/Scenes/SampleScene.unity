@@ -1075,7 +1075,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   colorManager: {fileID: 73185113}
   startText: {fileID: 590558451}
-  numberOfTrialsPerEccentricity: 10
+  numberOfTrialsPerEccentricity: 20
   referenceMaterial: {fileID: 2100000, guid: eff6d7934e6524557a8e65c0a7d6864d, type: 2}
   targetMaterial: {fileID: 2100000, guid: 4bcbdf38180e5479f917798821089067, type: 2}
   diskShowingTime: 0.5

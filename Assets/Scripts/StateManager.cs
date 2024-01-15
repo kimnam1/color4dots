@@ -10,37 +10,44 @@ using JetBrains.Annotations;
 
 public class StateManager : MonoBehaviour
 {
+    // Scripts
     public ColorManager colorManager; // Color Manager Script 불러오기
-    public TextMeshProUGUI startText; // 시작 텍스트
+
+    // Enum 상태 추적 변수
     private GameState currentGameState; // 현재 게임 상태를 추적하는 변수
     private EccentricityState currentEccentricityState; // 현재 이심률 상태를 추적하는 변수
-    private DimensionState currentDimensionState; // 현재 변경할 color space 축 상태를 추적하는 변수
-    private ReferenceColor currentReferenceColor; // 현재 reference color
-    private Vector3 referenceColorInDKL;
-    private Vector3 targetColorInRGB;
-    private int trialNumber = 1; // Trial 번호. CSV 저장용
-    private int reversalCount; // 현재 reversal count
+    private ReferenceColor currentReferenceColor; // 현재 reference color 추적하는 변수
     private TargetDisk currentTargetDisk; // 현재 target(정답) disk
+    private DimensionState currentDimensionState; // 현재 변경할 color space 축 상태를 추적하는 변수
+
+    // Experiment Setting
     public int numberOfTrialsPerEccentricity; // 실험 trial 설정.
-    private int currentEccentricityTrialsCompleted = 0; // Eccentricity 별 현재 진행된 trial 수
-    private int totalTrialsCompleted = 0; // 총 완료한 시행 횟수
+    [SerializeField] private float diskShowingTime = 0.5f; // Disk Showing Time(Unity의 Inspector창에서 조절할 것) 기본값 0.5초
 
     // Material to apply
     public Material referenceMaterial;
     public Material targetMaterial;
 
+    // Color Vector
+    private Vector3 referenceColorInDKL;
+    private Vector3 targetColorInRGB;
+
+    // Game Objects
+    public TextMeshProUGUI startText; // 시작 텍스트
+    [SerializeField] private GameObject diskManager_Eccentricity10; // Disk Manager Object - 10 Eccentricity
+    [SerializeField] private GameObject diskManager_Eccentricity25;// Disk Manager Object - 25 Eccentricity
+    [SerializeField] private GameObject diskManager_Eccentricity35;// Disk Manager Object - 35 Eccentricity
+
+    // Trial 상태 변수
+    private int trialNumber = 1; // Trial 번호. CSV 저장용
+    private int reversalCount; // 현재 reversal count
+    private int currentEccentricityTrialsCompleted = 0; // Eccentricity 별 현재 진행된 trial 수
+    private int totalTrialsCompleted = 0; // 총 완료한 시행 횟수
+    private bool isAnswered = false; // 현재 trial에 대해서 답변 여부 상태
+
+    // File management
     private string csvFilePath;
-    private bool isFirstEntry = true;
-    private bool isAnswered = false; // 현재 답변을 한지 안한지 체크
-
-
-    // Disk Showing Time(Unity의 Inspector창에서 조절할 것)
-    [SerializeField] private float diskShowingTime = 0.5f; // 기본값 0.5초
-    // Disk Manager Object 변수
-    [SerializeField] private GameObject diskManager_Eccentricity10;
-    [SerializeField] private GameObject diskManager_Eccentricity25;
-    [SerializeField] private GameObject diskManager_Eccentricity35;
-
+    private bool isFirstEntry = true; // 파일이 처음 만들어질 수 있도록 하는 bool
 
     // Start is called before the first frame update
     void Start()
@@ -48,9 +55,9 @@ public class StateManager : MonoBehaviour
         // CSV file name/path
         string fileName = "TestResults_" + GetFormattedDateTime() + ".csv";
         csvFilePath = Path.Combine(Application.dataPath, "CSV", fileName);
+
         // 실험시작
         ChangeGameState(GameState.Start);
-        StartCoroutine(RunExperiment());
     }
 
     // Update is called once per frame
@@ -60,26 +67,21 @@ public class StateManager : MonoBehaviour
         {
             case GameState.Start:
                 // 시작 상태에서의 로직
+
+                // TODO: 실험 시작 전 "Press Any Key To Start" 텍스트 보여주기
+
                 if (Input.anyKeyDown)
                 {
                     ChangeGameState(GameState.InGame);
                     ChangeEccentricityState(EccentricityState.Eccentricity_10);
+
+                    // 실험시작
+                    StartCoroutine(RunExperiment());
                 }
                 break;
             case GameState.InGame:
                 // 게임 진행 중 상태에서의 로직
-                if (Input.GetKeyDown(KeyCode.Q))
-                {
-                    ChangeEccentricityState(EccentricityState.Eccentricity_10);
-                }
-                if (Input.GetKeyDown(KeyCode.W))
-                {
-                    ChangeEccentricityState(EccentricityState.Eccentricity_25);
-                }
-                if (Input.GetKeyDown(KeyCode.E))
-                {
-                    ChangeEccentricityState(EccentricityState.Eccentricity_35);
-                }
+
                 break;
             case GameState.WaitingForResponse:
                 // 응답 대기 상태
@@ -233,10 +235,13 @@ public class StateManager : MonoBehaviour
             ProcessAnswer(4);
             ChangeGameState(GameState.InGame);
         }
+
+
     }
 
     IEnumerator RunSingleTrial()
     {
+
         // 랜덤 디스크 1개 설정
         int randomTargetDiskNumber = SelectRandomTargetDiskNumber();
 
@@ -276,17 +281,18 @@ public class StateManager : MonoBehaviour
         EccentricityState currentEccentricityState = GetCurrentEccentricityState();
         ActivateCurrentEccentricityDiskManager();
 
+        // 선택 전 isAnswered false 설정
+        isAnswered = false;
+
         // 디스크가 사라지기 전에 답변을 해버릴 경우
-        bool answerDuringDisplay = false;
         float elapsedTime = 0f;
         while (elapsedTime < diskShowingTime)
         {
             elapsedTime += Time.deltaTime;
 
-            if (!answerDuringDisplay && GetAnswerNumberFromInput() != 0)
+            if (!isAnswered && GetAnswerNumberFromInput() != 0)
             {
-                answerDuringDisplay = true; // 답변이 들어왔음을 표시
-                isAnswered = true;
+                isAnswered = true; // 답변이 들어왔음을 표시
                 HandleDiskSelection();
                 yield break;
             }
