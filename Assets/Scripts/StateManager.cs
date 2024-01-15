@@ -33,7 +33,7 @@ public class StateManager : MonoBehaviour
     private Vector3 targetColorInRGB;
 
     // Game Objects
-    public TextMeshProUGUI startText; // 시작 텍스트
+    [SerializeField] private TMP_Text startText; // 시작 텍스트
     [SerializeField] private GameObject diskManager_Eccentricity10; // Disk Manager Object - 10 Eccentricity
     [SerializeField] private GameObject diskManager_Eccentricity25;// Disk Manager Object - 25 Eccentricity
     [SerializeField] private GameObject diskManager_Eccentricity35;// Disk Manager Object - 35 Eccentricity
@@ -67,16 +67,9 @@ public class StateManager : MonoBehaviour
         {
             case GameState.Start:
                 // 시작 상태에서의 로직
-
-                // TODO: 실험 시작 전 "Press Any Key To Start" 텍스트 보여주기
-
                 if (Input.anyKeyDown)
                 {
-                    ChangeGameState(GameState.InGame);
-                    ChangeEccentricityState(EccentricityState.Eccentricity_10);
-
-                    // 실험시작
-                    StartCoroutine(RunExperiment());
+                    StartCoroutine(ExperimentPreparation());
                 }
                 break;
             case GameState.InGame:
@@ -112,8 +105,6 @@ public class StateManager : MonoBehaviour
             case GameState.Start:
                 // 게임 시작으로 변경 시 실행 로직
                 Debug.Log("Game State : Start");
-                startText.gameObject.SetActive(true);
-                startText.text = "Press Any Button To Start";
 
                 break;
             case GameState.InGame:
@@ -235,13 +226,12 @@ public class StateManager : MonoBehaviour
             ProcessAnswer(4);
             ChangeGameState(GameState.InGame);
         }
-
-
     }
 
     IEnumerator RunSingleTrial()
     {
-
+        Debug.Log("================================================================");
+        Debug.Log($"Run Single Trial!!! Trial number: {trialNumber}");
         // 랜덤 디스크 1개 설정
         int randomTargetDiskNumber = SelectRandomTargetDiskNumber();
 
@@ -328,6 +318,22 @@ public class StateManager : MonoBehaviour
         }
     }
 
+    // 5초 대기 후 실험 시작
+    IEnumerator ExperimentPreparation()
+    {
+        // 5초 대기/남은 시간 보여주기
+        for (int i = 0; i < 5; i++)
+        {
+            startText.text = $"Start in {5 - i}";
+            yield return new WaitForSeconds(1f);
+        }
+
+        ChangeGameState(GameState.InGame);
+        ChangeEccentricityState(EccentricityState.Eccentricity_10);
+
+        // 실험시작
+        StartCoroutine(RunExperiment());
+    }
     public void ChangeEccentricityStateToNext()
     {
         switch (currentEccentricityState)
@@ -352,6 +358,8 @@ public class StateManager : MonoBehaviour
         StopCoroutine(RunSingleTrial());
         StartCoroutine(RunSingleTrial());
     }
+
+
 
     void ProcessAnswer(int selectedAnswerNumber)
     {
