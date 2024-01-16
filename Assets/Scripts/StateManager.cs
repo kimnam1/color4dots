@@ -7,6 +7,9 @@ using System;
 using System.Text;
 using System.ComponentModel.Design;
 using JetBrains.Annotations;
+using Unity.VisualScripting;
+using UnityEngine.UIElements;
+using UnityEngine.Rendering;
 
 public class StateManager : MonoBehaviour
 {
@@ -42,7 +45,7 @@ public class StateManager : MonoBehaviour
     private int trialNumber = 1; // Trial 번호. CSV 저장용
     private int reversalCount; // 현재 reversal count
     private int currentEccentricityTrialsCompleted = 0; // Eccentricity 별 현재 진행된 trial 수
-    private bool isAnswered = false; // 현재 trial에 대해서 답변 여부 상태
+    private bool isAnswered; // 답변 들어왔는지 파악하는 bool
 
     // File management
     private string csvFilePath;
@@ -68,165 +71,54 @@ public class StateManager : MonoBehaviour
                 // 시작 상태에서의 로직
                 if (Input.anyKeyDown)
                 {
-                    StartCoroutine(ExperimentPreparation()); // 시작 전 5초 대기 메소드
+                    StartCoroutine(ExperimentPreparation()); // 시작 전 5초 대기 메소드. 대기 후 RunExperiment 시작됨.
                 }
                 break;
             case GameState.InGame:
                 // 게임 진행 중 상태에서의 로직
-
-                break;
-            case GameState.WaitingForResponse:
-                // 응답 대기 상태
-                if ((Input.GetKeyDown(KeyCode.A)) || (Input.GetKeyDown(KeyCode.S)) || (Input.GetKeyDown(KeyCode.Z)) || (Input.GetKeyDown(KeyCode.X)))
-                {
-                    isAnswered = true;
-                    ChangeGameState(GameState.InGame);
-                }
-
+                HandleDiskSelection();
                 break;
             case GameState.Pause:
                 // 일시 정지 상태에서의 로직
                 break;
             case GameState.End:
                 // 게임 종료 상태에서의 로직
+                DeactivateDiskManagers();
+                StopAllCoroutines();
+                startText.text = "Experiment Over";
                 break;
         }
     }
 
-    public void ChangeGameState(GameState newGameState)
+
+
+
+    // 실험 실행 메소드
+
+
+    // 시야각 별 실험 실행 메소드
+    IEnumerator RunExperiment()
     {
-        currentGameState = newGameState;
-
-        // 상태 변경 시 필요한 로직을 여기에 추가
-        switch (newGameState)
+        while (currentEccentricityTrialsCompleted < numberOfTrialsPerEccentricity)
         {
-            case GameState.Start:
-                // 게임 시작으로 변경 시 실행 로직
-                Debug.Log("Game State : Start");
+            Debug.Log($"Current Eccentricity Trial Completed: {currentEccentricityTrialsCompleted}");
+            isAnswered = false;
+            StartCoroutine(RunSingleTrial());
+            yield return new WaitUntil(() => isAnswered);
 
-                break;
-            case GameState.InGame:
-                // 게임 진행으로 변경 시 실행 로직
-                Debug.Log("Game State : In Game");
-                startText.gameObject.SetActive(false);
-
-                break;
-            case GameState.WaitingForResponse:
-                // Response Waiting으로 변경 시 실행 로직
-                DeactivateDiskManagers();// disk Deactivate
-                Debug.Log("Game State : Waiting For Response");
-
-                break;
-            case GameState.Pause:
-                // 게임 일시 정지로 변경 시 실행 로직
-
-                break;
-            case GameState.End:
-                // 게임 종료로 변경 시 실행 로직
-
-                break;
+            currentEccentricityTrialsCompleted++;
         }
+
+        if (currentEccentricityState == EccentricityState.Eccentricity_35 && currentEccentricityTrialsCompleted == numberOfTrialsPerEccentricity)
+        {
+            ChangeGameState(GameState.End);
+        }
+
+        // 위에서 numberOfTrialsPerEccentricity만큼 반복했으므로 Eccentricity 변경 또는 종료 로직 추가
+        currentEccentricityTrialsCompleted = 0;
+        ChangeEccentricityStateToNext();
     }
-    public void DeactivateDiskManagers()
-    {
-        // 모든 디스크 비활성화
-        diskManager_Eccentricity10.SetActive(false);
-        diskManager_Eccentricity25.SetActive(false);
-        diskManager_Eccentricity35.SetActive(false);
-    }
-    public void ChangeEccentricityState(EccentricityState newEccentricityState)
-    {
-        currentEccentricityState = newEccentricityState;
-
-        switch (newEccentricityState)
-        {
-            case EccentricityState.Eccentricity_10:
-                // Eccentricity 10으로 변경될 때 실행 로직
-                Debug.Log("Eccentricity Changed to 10");
-                break;
-            case EccentricityState.Eccentricity_25:
-                // Eccentricitiy 25로 변경될 때 실행 로직
-                StartCoroutine(RunExperiment());
-                Debug.Log("Eccentricity Changed to 25");
-                break;
-            case EccentricityState.Eccentricity_35:
-                // Eccentricitiy 35로 변경될 때 실행 로직
-                StartCoroutine(RunExperiment());
-                Debug.Log("Eccentricity Changed to 35");
-                break;
-        }
-    }
-    int SelectRandomTargetDiskNumber()
-    {
-        int randomTargetDiskNumber = UnityEngine.Random.Range(1, 5);
-        Debug.Log("Target Disk Number: " + randomTargetDiskNumber);
-
-        switch (randomTargetDiskNumber)
-        {
-            case 1:
-                currentTargetDisk = TargetDisk.Disk1;
-                break;
-            case 2:
-                currentTargetDisk = TargetDisk.Disk2;
-                break;
-            case 3:
-                currentTargetDisk = TargetDisk.Disk3;
-                break;
-            case 4:
-                currentTargetDisk = TargetDisk.Disk4;
-                break;
-        }
-        return randomTargetDiskNumber;
-    }
-    int currentTargetDiskNumber()
-    {
-        int targetDiskNumber = 0;
-        switch (currentTargetDisk)
-        {
-            case TargetDisk.Disk1:
-                targetDiskNumber = 1;
-                break;
-            case TargetDisk.Disk2:
-                targetDiskNumber = 2;
-                break;
-            case TargetDisk.Disk3:
-                targetDiskNumber = 3;
-                break;
-            case TargetDisk.Disk4:
-                targetDiskNumber = 4;
-                break;
-        }
-        return targetDiskNumber;
-    }
-
-    void HandleDiskSelection()
-    {
-        if (Input.GetKeyDown(KeyCode.A))
-        {
-            Debug.Log("(StateManage.cs/HandleDiskSelection)Disk 1 as answer");
-            ProcessAnswer(1);
-            ChangeGameState(GameState.InGame);
-        }
-        else if (Input.GetKeyDown(KeyCode.S))
-        {
-            Debug.Log("(StateManage.cs/HandleDiskSelection)Disk 2 as answer");
-            ProcessAnswer(2);
-            ChangeGameState(GameState.InGame);
-        }
-        else if (Input.GetKeyDown(KeyCode.Z))
-        {
-            Debug.Log("(StateManage.cs/HandleDiskSelection)Disk 3 as answer");
-            ProcessAnswer(3);
-            ChangeGameState(GameState.InGame);
-        }
-        else if (Input.GetKeyDown(KeyCode.X))
-        {
-            Debug.Log("(StateManage.cs/HandleDiskSelection)Disk 4 as answer");
-            ProcessAnswer(4);
-            ChangeGameState(GameState.InGame);
-        }
-    }
-
+    // Trial 하나 실행 메소드
     IEnumerator RunSingleTrial()
     {
         Debug.Log("================================================================");
@@ -270,55 +162,42 @@ public class StateManager : MonoBehaviour
         EccentricityState currentEccentricityState = GetCurrentEccentricityState();
         ActivateCurrentEccentricityDiskManager();
 
-        // 선택 전 isAnswered false 설정
+        // Trial 시작이므로 isAnswered false
         isAnswered = false;
 
-        // 디스크가 사라지기 전에 답변을 해버릴 경우
-        float elapsedTime = 0f;
+        float elapsedTime = 0.0f;
         while (elapsedTime < diskShowingTime)
         {
             elapsedTime += Time.deltaTime;
 
-            if (!isAnswered && GetAnswerNumberFromInput() != 0)
+            if (isAnswered)
             {
-                isAnswered = true; // 답변이 들어왔음을 표시
-                HandleDiskSelection();
-                yield break;
+                break;
             }
 
             yield return null;
         }
-        // 디스크 사라진 후 답변을 받지 못한 경우 WaitingForResponse 상태로 전환
-        if (!isAnswered)
-        {
-            ChangeGameState(GameState.WaitingForResponse);
-            isAnswered = false;
-        }
 
-        // 피실험자 응답 기다리기
-        yield return new WaitUntil(() => currentGameState != GameState.WaitingForResponse);
+        DeactivateDiskManagers();
+
+        if (isAnswered)
+        {
+            Debug.Log("Answer received within 0.5 seconds.");
+            yield return new WaitForSeconds(1.0f);
+        }
+        else
+        {
+            Debug.Log("Waiting for answer after 0.5 seconds");
+            yield return new WaitUntil(() => isAnswered);
+        }
 
         // trial 횟수와 reversal 업데이트 필요.
 
         // CSV 저장
 
     }
-    IEnumerator RunExperiment()
-    {
-        while (currentEccentricityTrialsCompleted < numberOfTrialsPerEccentricity)
-        {
-            Debug.Log($"Current Eccentricity Trial Completed: {currentEccentricityTrialsCompleted}");
-            yield return StartCoroutine(RunSingleTrial());
 
-            currentEccentricityTrialsCompleted++;
-        }
-
-        // 위에서 numberOfTrialsPerEccentricity만큼 반복했으므로 Eccentricity 변경 또는 종료 로직 추가
-        currentEccentricityTrialsCompleted = 0;
-        ChangeEccentricityStateToNext();
-    }
-
-    // 5초 대기 후 실험 시작
+    // 5초 대기 후 실험 시작 메소드
     IEnumerator ExperimentPreparation()
     {
         // 5초 대기/남은 시간 보여주기
@@ -336,6 +215,118 @@ public class StateManager : MonoBehaviour
         StartCoroutine(RunExperiment());
     }
 
+    // 실험 실행 메소드 끝
+
+    // 정답 입력 처리 메소드
+
+    // 키보드 입력에 따른 정답 저장 및 ProcessAnswer 실행
+    void HandleDiskSelection()
+    {
+        if (Input.GetKeyDown(KeyCode.A))
+        {
+            Debug.Log("(StateManage.cs/HandleDiskSelection)Disk 1 as answer");
+            ProcessAnswer(1);
+            ChangeGameState(GameState.InGame);
+            isAnswered = true;
+        }
+        else if (Input.GetKeyDown(KeyCode.S))
+        {
+            Debug.Log("(StateManage.cs/HandleDiskSelection)Disk 2 as answer");
+            ProcessAnswer(2);
+            ChangeGameState(GameState.InGame);
+            isAnswered = true;
+
+        }
+        else if (Input.GetKeyDown(KeyCode.Z))
+        {
+            Debug.Log("(StateManage.cs/HandleDiskSelection)Disk 3 as answer");
+            ProcessAnswer(3);
+            ChangeGameState(GameState.InGame);
+            isAnswered = true;
+
+        }
+        else if (Input.GetKeyDown(KeyCode.X))
+        {
+            Debug.Log("(StateManage.cs/HandleDiskSelection)Disk 4 as answer");
+            ProcessAnswer(4);
+            ChangeGameState(GameState.InGame);
+            isAnswered = true;
+
+        }
+    }
+
+    // 답변이 변수로 들어오면 CSV로 저장하는 메소드
+    void ProcessAnswer(int selectedAnswerNumber)
+    {
+        if (selectedAnswerNumber == currentTargetDiskNumber())
+        {
+            Debug.Log("(ProcessAnswer)Correct Answer");
+        }
+        else
+        {
+            Debug.Log("(ProcessAnswer)Wrong Answer");
+        }
+
+        // CSV 파일에 저장하는 로직
+        SaveToCSV(selectedAnswerNumber, selectedAnswerNumber == currentTargetDiskNumber());
+
+        // 다음 시행을 위한 상태 변경
+        trialNumber++;
+        ChangeGameState(GameState.InGame);
+    }
+
+
+    // ChangeState Methods
+    public void ChangeGameState(GameState newGameState)
+    {
+        currentGameState = newGameState;
+
+        // 상태 변경 시 필요한 로직을 여기에 추가
+        switch (newGameState)
+        {
+            case GameState.Start:
+                // 게임 시작으로 변경 시 실행 로직
+                Debug.Log("Game State : Start");
+
+                break;
+            case GameState.InGame:
+                // 게임 진행으로 변경 시 실행 로직
+                Debug.Log("Game State : In Game");
+                startText.gameObject.SetActive(false);
+
+                break;
+            case GameState.Pause:
+                // 게임 일시 정지로 변경 시 실행 로직
+
+                break;
+            case GameState.End:
+                // 게임 종료로 변경 시 실행 로직
+                startText.gameObject.SetActive(true);
+                break;
+        }
+    }
+    public void ChangeEccentricityState(EccentricityState newEccentricityState)
+    {
+        currentEccentricityState = newEccentricityState;
+
+        switch (newEccentricityState)
+        {
+            case EccentricityState.Eccentricity_10:
+                // Eccentricity 10으로 변경될 때 실행 로직
+                Debug.Log("Eccentricity Changed to 10");
+                break;
+            case EccentricityState.Eccentricity_25:
+                // Eccentricitiy 25로 변경될 때 실행 로직
+                StartCoroutine(RunExperiment());
+                Debug.Log("Eccentricity Changed to 25");
+                break;
+            case EccentricityState.Eccentricity_35:
+                // Eccentricitiy 35로 변경될 때 실행 로직
+                StartCoroutine(RunExperiment());
+                Debug.Log("Eccentricity Changed to 35");
+                break;
+        }
+    }
     // Eccentricity 다음으로 변경하기
     public void ChangeEccentricityStateToNext()
     {
@@ -360,26 +351,7 @@ public class StateManager : MonoBehaviour
     }
 
 
-
-    void ProcessAnswer(int selectedAnswerNumber)
-    {
-        if (selectedAnswerNumber == currentTargetDiskNumber())
-        {
-            Debug.Log("(ProcessAnswer)Correct Answer");
-        }
-        else
-        {
-            Debug.Log("(ProcessAnswer)Wrong Answer");
-        }
-
-        // CSV 파일에 저장하는 로직
-        SaveToCSV(selectedAnswerNumber, selectedAnswerNumber == currentTargetDiskNumber());
-
-        // 다음 시행을 위한 상태 변경
-        trialNumber++;
-        ChangeGameState(GameState.InGame);
-    }
-
+    // 저장 메소드
     void SaveToCSV(int answer, bool isCorrect)
     {
         // CSV 파일에 데이터 저장 로직
@@ -394,19 +366,64 @@ public class StateManager : MonoBehaviour
 
         File.AppendAllText(csvFilePath, newDataLine + "\n");
     }
-    int GetAnswerNumberFromInput()
-    {
-        if (Input.GetKeyDown(KeyCode.A)) return 1;
-        if (Input.GetKeyDown(KeyCode.S)) return 2;
-        if (Input.GetKeyDown(KeyCode.Z)) return 3;
-        if (Input.GetKeyDown(KeyCode.X)) return 4;
-        return 0; // 어떤 답변도 누르지 않은 경우
-    }
+
     private string GetFormattedDateTime()
     {
         DateTime now = DateTime.Now;
 
         return now.ToString("MMdd_HH-mm-ss");
+    }
+
+
+    // Disk 처리 메소드
+    int SelectRandomTargetDiskNumber()
+    {
+        int randomTargetDiskNumber = UnityEngine.Random.Range(1, 5);
+        Debug.Log("Target Disk Number: " + randomTargetDiskNumber);
+
+        switch (randomTargetDiskNumber)
+        {
+            case 1:
+                currentTargetDisk = TargetDisk.Disk1;
+                break;
+            case 2:
+                currentTargetDisk = TargetDisk.Disk2;
+                break;
+            case 3:
+                currentTargetDisk = TargetDisk.Disk3;
+                break;
+            case 4:
+                currentTargetDisk = TargetDisk.Disk4;
+                break;
+        }
+        return randomTargetDiskNumber;
+    }
+    int currentTargetDiskNumber()
+    {
+        int targetDiskNumber = 0;
+        switch (currentTargetDisk)
+        {
+            case TargetDisk.Disk1:
+                targetDiskNumber = 1;
+                break;
+            case TargetDisk.Disk2:
+                targetDiskNumber = 2;
+                break;
+            case TargetDisk.Disk3:
+                targetDiskNumber = 3;
+                break;
+            case TargetDisk.Disk4:
+                targetDiskNumber = 4;
+                break;
+        }
+        return targetDiskNumber;
+    }
+    public void DeactivateDiskManagers()
+    {
+        // 모든 디스크 비활성화
+        diskManager_Eccentricity10.SetActive(false);
+        diskManager_Eccentricity25.SetActive(false);
+        diskManager_Eccentricity35.SetActive(false);
     }
     public void ActivateCurrentEccentricityDiskManager()
     {
@@ -450,7 +467,6 @@ public enum GameState
 {
     Start,
     InGame,
-    WaitingForResponse,
     Pause,
     End
 }
