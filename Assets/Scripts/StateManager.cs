@@ -21,7 +21,7 @@ public class StateManager : MonoBehaviour
     private DimensionState currentDimensionState; // 현재 변경할 color space 축 상태를 추적하는 변수
 
     // Experiment Setting
-    public int numberOfTrialsPerEccentricity; // 실험 trial 설정.
+    public int numberOfTrialsPerEccentricity; // 하나의 시야각 당 진행할 trial 수 설정.
     [SerializeField] private float diskShowingTime = 0.5f; // Disk Showing Time(Unity의 Inspector창에서 조절할 것) 기본값 0.5초
 
     // Material to apply
@@ -42,7 +42,6 @@ public class StateManager : MonoBehaviour
     private int trialNumber = 1; // Trial 번호. CSV 저장용
     private int reversalCount; // 현재 reversal count
     private int currentEccentricityTrialsCompleted = 0; // Eccentricity 별 현재 진행된 trial 수
-    private int totalTrialsCompleted = 0; // 총 완료한 시행 횟수
     private bool isAnswered = false; // 현재 trial에 대해서 답변 여부 상태
 
     // File management
@@ -69,7 +68,7 @@ public class StateManager : MonoBehaviour
                 // 시작 상태에서의 로직
                 if (Input.anyKeyDown)
                 {
-                    StartCoroutine(ExperimentPreparation());
+                    StartCoroutine(ExperimentPreparation()); // 시작 전 5초 대기 메소드
                 }
                 break;
             case GameState.InGame:
@@ -78,7 +77,6 @@ public class StateManager : MonoBehaviour
                 break;
             case GameState.WaitingForResponse:
                 // 응답 대기 상태
-                DeactivateDiskManagers();
                 if ((Input.GetKeyDown(KeyCode.A)) || (Input.GetKeyDown(KeyCode.S)) || (Input.GetKeyDown(KeyCode.Z)) || (Input.GetKeyDown(KeyCode.X)))
                 {
                     isAnswered = true;
@@ -115,6 +113,7 @@ public class StateManager : MonoBehaviour
                 break;
             case GameState.WaitingForResponse:
                 // Response Waiting으로 변경 시 실행 로직
+                DeactivateDiskManagers();// disk Deactivate
                 Debug.Log("Game State : Waiting For Response");
 
                 break;
@@ -231,7 +230,7 @@ public class StateManager : MonoBehaviour
     IEnumerator RunSingleTrial()
     {
         Debug.Log("================================================================");
-        Debug.Log($"Run Single Trial!!! Trial number: {trialNumber}");
+        Debug.Log($"Run Single Trial! Trial number: {trialNumber}");
         // 랜덤 디스크 1개 설정
         int randomTargetDiskNumber = SelectRandomTargetDiskNumber();
 
@@ -261,11 +260,11 @@ public class StateManager : MonoBehaviour
 
         // ref mat에 색 입히기
         colorManager.SetMaterialColor(colorManager.referenceMaterial, new Vector3(referenceColorInRGB.x / 255, referenceColorInRGB.y / 255, referenceColorInRGB.z / 255));
-        Debug.Log("(RunSigleTrial)Reference Color: " + referenceColorInRGB);
+        Debug.Log("(RunSigleTrial)Reference Color: " + referenceColorInRGB + " is applied to material");
 
         // target mat에 색 입히기
         colorManager.SetMaterialColor(colorManager.targetMaterial, new Vector3(targetColorInRGB.x / 255, targetColorInRGB.y / 255, targetColorInRGB.z / 255));
-        Debug.Log("(RunSigleTrial)Target Color: " + targetColorInRGB);
+        Debug.Log("(RunSigleTrial)Target Color: " + targetColorInRGB + " is applied to material");
 
         // 이심률 변경 및 해당하는 디스크 켜기
         EccentricityState currentEccentricityState = GetCurrentEccentricityState();
@@ -306,16 +305,17 @@ public class StateManager : MonoBehaviour
     }
     IEnumerator RunExperiment()
     {
-        while (totalTrialsCompleted < numberOfTrialsPerEccentricity)
+        while (currentEccentricityTrialsCompleted < numberOfTrialsPerEccentricity)
         {
-            for (int i = 0; i < numberOfTrialsPerEccentricity; i++)
-            {
-                yield return StartCoroutine(RunSingleTrial());
-            }
+            Debug.Log($"Current Eccentricity Trial Completed: {currentEccentricityTrialsCompleted}");
+            yield return StartCoroutine(RunSingleTrial());
 
-            // 위에서 numberOfTrialsPerEccentricity만큼 반복했으므로 Eccentricity 변경 또는 종료 로직 추가
-            ChangeEccentricityStateToNext();
+            currentEccentricityTrialsCompleted++;
         }
+
+        // 위에서 numberOfTrialsPerEccentricity만큼 반복했으므로 Eccentricity 변경 또는 종료 로직 추가
+        currentEccentricityTrialsCompleted = 0;
+        ChangeEccentricityStateToNext();
     }
 
     // 5초 대기 후 실험 시작
@@ -328,12 +328,15 @@ public class StateManager : MonoBehaviour
             yield return new WaitForSeconds(1f);
         }
 
+        // 대기 후 실험 상태로 setting
         ChangeGameState(GameState.InGame);
         ChangeEccentricityState(EccentricityState.Eccentricity_10);
 
-        // 실험시작
+        // 실험 시작
         StartCoroutine(RunExperiment());
     }
+
+    // Eccentricity 다음으로 변경하기
     public void ChangeEccentricityStateToNext()
     {
         switch (currentEccentricityState)
@@ -345,14 +348,11 @@ public class StateManager : MonoBehaviour
                 ChangeEccentricityState(EccentricityState.Eccentricity_35);
                 break;
             case EccentricityState.Eccentricity_35:
-                // 실험 종료 상태로 변경
-                ChangeGameState(GameState.End);
                 break;
         }
 
         // Eccentricity 변경 후 관련 변수 초기화 또는 업데이트
         currentEccentricityTrialsCompleted = 0;
-        totalTrialsCompleted += numberOfTrialsPerEccentricity;
 
         // 현재 실행 중인 코루틴 중지 후 Eccentricity 변경하고 다시 실행(Eccentricity 변경 타이밍에 답변 기다리지 않는 문제 해결 목적)
         StopCoroutine(RunSingleTrial());
@@ -376,7 +376,7 @@ public class StateManager : MonoBehaviour
         SaveToCSV(selectedAnswerNumber, selectedAnswerNumber == currentTargetDiskNumber());
 
         // 다음 시행을 위한 상태 변경
-        trialNumber += 1;
+        trialNumber++;
         ChangeGameState(GameState.InGame);
     }
 
