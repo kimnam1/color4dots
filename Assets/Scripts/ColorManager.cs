@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class ColorManager : MonoBehaviour
 {
+    public StateManager stateManager; // State Manager Script 불러오기
+
     // 조정할 값(10퍼센트에 해당하는 값)
     public float adjustValueDKLX;
     public float adjustValueDKLY;
@@ -128,4 +130,5 @@ public class ColorManager : MonoBehaviour
 
         materialToSet.color = colorToApply;
     }
+
 }
