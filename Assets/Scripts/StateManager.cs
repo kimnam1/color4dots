@@ -85,7 +85,7 @@ public class StateManager : MonoBehaviour
                 // 게임 종료 상태에서의 로직
                 DeactivateDiskManagers();
                 StopAllCoroutines();
-                startText.text = "Experiment Over";
+                startText.text = "Finished";
                 break;
         }
     }
@@ -96,7 +96,7 @@ public class StateManager : MonoBehaviour
     // 실험 실행 메소드
 
 
-    // 시야각 별 실험 실행 메소드
+    // Condition 별 실험 실행 메소드
     IEnumerator RunExperiment()
     {
         while (currentEccentricityTrialsCompleted < numberOfTrialsPerEccentricity)
@@ -109,6 +109,7 @@ public class StateManager : MonoBehaviour
             currentEccentricityTrialsCompleted++;
         }
 
+        // 35시야각 단계라면 이후 종료
         if (currentEccentricityState == EccentricityState.Eccentricity_35 && currentEccentricityTrialsCompleted == numberOfTrialsPerEccentricity)
         {
             ChangeGameState(GameState.End);
@@ -118,6 +119,8 @@ public class StateManager : MonoBehaviour
         currentEccentricityTrialsCompleted = 0;
         ChangeEccentricityStateToNext();
     }
+
+
     // Trial 하나 실행 메소드
     IEnumerator RunSingleTrial()
     {
@@ -158,7 +161,7 @@ public class StateManager : MonoBehaviour
         colorManager.SetMaterialColor(colorManager.targetMaterial, new Vector3(targetColorInRGB.x / 255, targetColorInRGB.y / 255, targetColorInRGB.z / 255));
         Debug.Log("(RunSigleTrial)Target Color: " + targetColorInRGB + " is applied to material");
 
-        // 이심률 변경 및 해당하는 디스크 켜기
+        // 이심률 지정 및 해당하는 디스크 켜기
         EccentricityState currentEccentricityState = GetCurrentEccentricityState();
         ActivateCurrentEccentricityDiskManager();
 
@@ -180,16 +183,6 @@ public class StateManager : MonoBehaviour
 
         DeactivateDiskManagers();
 
-        if (isAnswered)
-        {
-            Debug.Log("Answer received within 0.5 seconds.");
-            yield return new WaitForSeconds(1.0f);
-        }
-        else
-        {
-            Debug.Log("Waiting for answer after 0.5 seconds");
-            yield return new WaitUntil(() => isAnswered);
-        }
 
         // trial 횟수와 reversal 업데이트 필요.
 
@@ -210,9 +203,6 @@ public class StateManager : MonoBehaviour
         // 대기 후 실험 상태로 setting
         ChangeGameState(GameState.InGame);
         ChangeEccentricityState(EccentricityState.Eccentricity_10);
-
-        // 실험 시작
-        StartCoroutine(RunExperiment());
     }
 
     // 실험 실행 메소드 끝
@@ -276,7 +266,10 @@ public class StateManager : MonoBehaviour
     }
 
 
-    // ChangeState Methods
+    /**
+    State Change Methods
+    **/
+
     public void ChangeGameState(GameState newGameState)
     {
         currentGameState = newGameState;
@@ -305,6 +298,55 @@ public class StateManager : MonoBehaviour
                 break;
         }
     }
+
+    public void ChangeReferenceColorState(ReferenceColor referenceColor)
+    {
+        currentReferenceColor = referenceColor;
+
+        switch (referenceColor)
+        {
+            case ReferenceColor.ReferenceColor1:
+                // reference Color 1로 변경될 때 실행 로직
+                StartCoroutine(RunExperiment());
+                break;
+            case ReferenceColor.ReferenceColor2:
+                // reference Color 2로 변경될 때 실행 로직
+                StartCoroutine(RunExperiment());
+                break;
+            case ReferenceColor.ReferenceColor3:
+                // reference Color 3으로 변경될때 실행 로직
+                StartCoroutine(RunExperiment());
+                break;
+            case ReferenceColor.ReferenceColor4:
+                // reference Color 4로 변경될 때 실행 로직
+                StartCoroutine(RunExperiment());
+                break;
+            case ReferenceColor.ReferenceColor5:
+                // reference Color 5로 변경될 때 실행 로직
+                StartCoroutine(RunExperiment());
+                break;
+        }
+    }
+    public void ChangeReferenceColorToNext()
+    {
+        switch (currentReferenceColor)
+        {
+            case ReferenceColor.ReferenceColor1:
+                ChangeReferenceColorState(ReferenceColor.ReferenceColor2);
+                break;
+            case ReferenceColor.ReferenceColor2:
+                ChangeReferenceColorState(ReferenceColor.ReferenceColor3);
+                break;
+            case ReferenceColor.ReferenceColor3:
+                ChangeReferenceColorState(ReferenceColor.ReferenceColor4);
+                break;
+            case ReferenceColor.ReferenceColor4:
+                ChangeReferenceColorState(ReferenceColor.ReferenceColor5);
+                break;
+        }
+
+
+    }
     public void ChangeEccentricityState(EccentricityState newEccentricityState)
     {
         currentEccentricityState = newEccentricityState;
@@ -313,6 +355,7 @@ public class StateManager : MonoBehaviour
         {
             case EccentricityState.Eccentricity_10:
                 // Eccentricity 10으로 변경될 때 실행 로직
+                StartCoroutine(RunExperiment());
                 Debug.Log("Eccentricity Changed to 10");
                 break;
             case EccentricityState.Eccentricity_25:
@@ -349,6 +392,32 @@ public class StateManager : MonoBehaviour
         StopCoroutine(RunSingleTrial());
         StartCoroutine(RunSingleTrial());
     }
+
+    public void ChangeDimensionState(DimensionState dimensionState)
+    {
+        currentDimensionState = dimensionState;
+
+        switch (currentDimensionState)
+        {
+            case DimensionState.xPositive:
+                // xPositive로 변경될 때 실행 로직
+                StartCoroutine(RunExperiment());
+                break;
+            case DimensionState.xNegative:
+                // xNegative로 변경될 때 실행 로직
+                StartCoroutine(RunExperiment());
+                break;
+            case DimensionState.yPositive:
+                // yPositive로 변경될 때 실행 로직
+                StartCoroutine(RunExperiment());
+                break;
+            case DimensionState.yNegative:
+                // yNegative로 변경될 때 실행 로직
+                StartCoroutine(RunExperiment());
+                break;
+        }
+    }
+
 
 
     // 저장 메소드
