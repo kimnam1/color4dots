@@ -41,6 +41,7 @@ public class StateManager : MonoBehaviour
     [SerializeField] private GameObject diskManager_Eccentricity25;// Disk Manager Object - 25 Eccentricity
     [SerializeField] private GameObject diskManager_Eccentricity35;// Disk Manager Object - 35 Eccentricity
     [SerializeField] private TMP_Text answerText; // 답 나오는 텍스트. Test 용
+    [SerializeField] private TMP_Text debugText; // Debug용 텍스트
 
 
     // Trial 상태 변수
@@ -55,6 +56,7 @@ public class StateManager : MonoBehaviour
 
     // 난이도 변수
     private int difficulty = 50;
+    private bool isConditionFirst = true;
 
     // File management
     private string csvFilePath;
@@ -74,6 +76,8 @@ public class StateManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        //Debug용 정보
+        debugText.text = $"Trial Info\nDifficulty: {difficulty}\nEccen.: {currentEccentricityState}\nRef Color: {referenceMaterial.color}\nTargetColor: {targetMaterial.color}";
         switch (currentTargetDisk)
         {
             case TargetDisk.Disk1:
@@ -89,6 +93,20 @@ public class StateManager : MonoBehaviour
                 answerText.text = "4";
                 break;
         }
+        // Debug용 정보 끝
+
+        if (Input.GetKeyDown(KeyCode.Alpha2))
+        {
+            if (currentGameState == GameState.Pause)
+            {
+                ChangeGameState(GameState.InGame);
+            }
+            else
+            {
+                ChangeGameState(GameState.Pause);
+            }
+        }
+
         switch (currentGameState)
         {
             case GameState.Start:
@@ -110,6 +128,10 @@ public class StateManager : MonoBehaviour
                 break;
             case GameState.Pause:
                 // 일시 정지 상태에서의 로직
+                DeactivateDiskManagers();
+                gameText.gameObject.SetActive(true);
+                gameText.text = "Pause";
+
                 break;
             case GameState.End:
                 // 게임 종료 상태에서의 로직
@@ -229,11 +251,6 @@ public class StateManager : MonoBehaviour
         }
 
         DeactivateDiskManagers();
-
-
-        // trial 횟수와 reversal 업데이트 필요.
-
-        // CSV 저장
 
     }
 
@@ -381,6 +398,9 @@ public class StateManager : MonoBehaviour
 
     public void ChangeConditionToNext()
     {
+        // 새로운 condition 시작이라면 isConditionFirst = true;
+        isConditionFirst = true;
+
         if (currentDimensionState == DimensionState.yNegative)
         {
             if (currentEccentricityState == EccentricityState.Eccentricity_35)
@@ -465,7 +485,13 @@ public class StateManager : MonoBehaviour
     // reversal process 메소드
     void ProcessReversal(bool currentAnswerCorrect)
     {
-        if (currentAnswerCorrect != previousAnswerCorrect)
+        if (isConditionFirst)
+        {
+            previousAnswerCorrect = currentAnswerCorrect;
+            isConditionFirst = false;
+            return;
+        }
+        else if (currentAnswerCorrect != previousAnswerCorrect)
         {
             reversalCount++;
         }

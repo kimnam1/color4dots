@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Video;
 
@@ -139,7 +140,7 @@ public class ColorManager : MonoBehaviour
     {
         float adjustValueInRGB = 256f * 25 / 100; // RGB의 기본 난이도 25%
         float difficultyStepValueInRGB = 256f * 25 / 100 / 50;// 기본 Difficulty 50에 전체 0~100이니까 Difficulty 한단계 당 난이도 25%의 1/50 = 1/2%
-        float difficultyAppliedValue = adjustValueInRGB + ((difficulty - 50) * difficultyStepValueInRGB);
+        float difficultyAppliedValue = adjustValueInRGB - ((difficulty - 50) * difficultyStepValueInRGB);
         Vector3 adjustedColor = new Vector3(0f, 0f, 255f); // 기본 파란색. 아래 switch 제대로 실행 안되면 파란색으로 보이게
 
         if (dimensionState == DimensionState.xPositive)
