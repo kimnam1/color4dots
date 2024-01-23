@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Video;
 
 public class ColorManager : MonoBehaviour
 {
@@ -16,6 +17,7 @@ public class ColorManager : MonoBehaviour
 
     // Current Reference Colors Coordinate
     public List<Vector3> referenceColorsDKL;
+    public List<Vector3> referenceColorsRGB;
 
     void Start()
     {
@@ -28,6 +30,16 @@ public class ColorManager : MonoBehaviour
         referenceColorsDKL.Add(new Vector3(1.06440418f, 237.1414263f, 12.88814752f));
         referenceColorsDKL.Add(new Vector3(-26.30661874f, -464.681383f, 492.4826335f));
         referenceColorsDKL.Add(new Vector3(100.0f, 200.0f, 100.0f));
+
+        // RGB 리스트 초기화
+        referenceColorsRGB = new List<Vector3>();
+
+        // Reference Color in RGB 선언
+        referenceColorsRGB.Add(new Vector3(64f, 128f, 0f));
+        referenceColorsRGB.Add(new Vector3(128f, 64f, 0f));
+        referenceColorsRGB.Add(new Vector3(128f, 128f, 0f));
+        referenceColorsRGB.Add(new Vector3(192f, 128f, 0f));
+        referenceColorsRGB.Add(new Vector3(128f, 192f, 0f));
 
         // 추가 가능 : 추가 시 StateManager의 RunSinglTrial에서 개수에 맞게 변경해줘야 함.
 
@@ -112,7 +124,7 @@ public class ColorManager : MonoBehaviour
 
     public Vector3 CalculateTargetColor(Vector3 referenceColor)
     {
-        adjustValueDKLX = 20f;
+        adjustValueDKLX = 10f;
         adjustValueDKLY = 0.0f;
 
         Vector3 adjustedColor = new Vector3(
@@ -121,6 +133,51 @@ public class ColorManager : MonoBehaviour
             referenceColor.z
         );
         Debug.Log("(ColorManager.cs/CalculateTargetColor)Calculate Target Color: Target Color is " + adjustedColor);
+        return adjustedColor;
+    }
+    public Vector3 CalculateTargetColorTestRGB(Vector3 referenceColor, DimensionState dimensionState, int difficulty)
+    {
+        float adjustValueInRGB = 256f * 25 / 100; // RGB의 기본 난이도 25%
+        float difficultyStepValueInRGB = 256f * 25 / 100 / 50;// 기본 Difficulty 50에 전체 0~100이니까 Difficulty 한단계 당 난이도 25%의 1/50 = 1/2%
+        float difficultyAppliedValue = adjustValueInRGB + ((difficulty - 50) * difficultyStepValueInRGB);
+        Vector3 adjustedColor = new Vector3(0f, 0f, 255f); // 기본 파란색. 아래 switch 제대로 실행 안되면 파란색으로 보이게
+
+        if (dimensionState == DimensionState.xPositive)
+        {
+            adjustedColor = new Vector3(
+                referenceColor.x + difficultyAppliedValue,
+                referenceColor.y,
+                referenceColor.z
+                );
+        }
+        else if (dimensionState == DimensionState.xNegative)
+        {
+            adjustedColor = new Vector3(
+                referenceColor.x - difficultyAppliedValue,
+                referenceColor.y,
+                referenceColor.z
+                );
+        }
+        else if (dimensionState == DimensionState.yPositive)
+        {
+            adjustedColor = new Vector3(
+                referenceColor.x,
+                referenceColor.y + difficultyAppliedValue,
+                referenceColor.z
+                );
+        }
+        else if (dimensionState == DimensionState.yNegative)
+        {
+            adjustedColor = new Vector3(
+                referenceColor.x,
+                referenceColor.y - difficultyAppliedValue,
+                referenceColor.z
+                );
+
+        }
+
+        Debug.Log("(ColorManager.cs/CalculateTargetColorTestRGB)Calculate Target Color: Target Color is " + adjustedColor);
+
         return adjustedColor;
     }
 

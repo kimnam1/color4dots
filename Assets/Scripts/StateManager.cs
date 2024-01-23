@@ -36,10 +36,12 @@ public class StateManager : MonoBehaviour
     private Vector3 targetColorInRGB;
 
     // Game Objects
-    [SerializeField] private TMP_Text startText; // 시작 텍스트
+    [SerializeField] private TMP_Text gameText; // 시작 텍스트
     [SerializeField] private GameObject diskManager_Eccentricity10; // Disk Manager Object - 10 Eccentricity
     [SerializeField] private GameObject diskManager_Eccentricity25;// Disk Manager Object - 25 Eccentricity
     [SerializeField] private GameObject diskManager_Eccentricity35;// Disk Manager Object - 35 Eccentricity
+    [SerializeField] private TMP_Text answerText; // 답 나오는 텍스트. Test 용
+
 
     // Trial 상태 변수
     private int trialNumber = 1; // Trial 번호. CSV 저장용
@@ -48,11 +50,11 @@ public class StateManager : MonoBehaviour
     private bool isAnswered; // 답변 들어왔는지 파악하는 bool
     private int maxTrial = 50; // 1 Condition 당 최대 Trial 수
     private int maxReversal = 3; // 1 condition 당 최대 reversal 수
-    public bool isRight; // 맞았는지 틀렸는지 파악하는 bool
+    private bool isRight; // 맞았는지 틀렸는지 파악하는 bool
     private bool previousAnswerCorrect; // 전단계 정답 여부 bool. reversalCount에 필요.
 
     // 난이도 변수
-    public int difficulty = 1;
+    private int difficulty = 50;
 
     // File management
     private string csvFilePath;
@@ -72,10 +74,31 @@ public class StateManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        switch (currentTargetDisk)
+        {
+            case TargetDisk.Disk1:
+                answerText.text = "1";
+                break;
+            case TargetDisk.Disk2:
+                answerText.text = "2";
+                break;
+            case TargetDisk.Disk3:
+                answerText.text = "3";
+                break;
+            case TargetDisk.Disk4:
+                answerText.text = "4";
+                break;
+        }
         switch (currentGameState)
         {
             case GameState.Start:
                 // 시작 상태에서의 로직
+                // 시작할 때는 배경이랑 같은색으로 만들어두자.
+                colorManager.SetMaterialColor(colorManager.referenceMaterial, new Vector3(0.5f, 0.5f, 0.5f));
+                colorManager.SetMaterialColor(colorManager.targetMaterial, new Vector3(0.5f, 0.5f, 0.5f));
+
+                // Test disk color apply
+
                 if (Input.anyKeyDown)
                 {
                     StartCoroutine(ExperimentPreparation()); // 시작 전 5초 대기 메소드. 대기 후 RunExperiment 시작됨.
@@ -92,7 +115,7 @@ public class StateManager : MonoBehaviour
                 // 게임 종료 상태에서의 로직
                 DeactivateDiskManagers();
                 StopAllCoroutines();
-                startText.text = "Finished";
+                gameText.text = "Finished";
                 break;
         }
     }
@@ -120,6 +143,7 @@ public class StateManager : MonoBehaviour
         // 위에서 한 condition에 대한 반복 끝났으므로 Next Condition으로 변경 또는 종료 로직 추가
         currentConditionTrialCompleted = 0; // 새로 시작해야하니까 ConditionTrialCompleted = 0
         reversalCount = 0;
+        difficulty = 50; // 새로 시작하니까 difficulty 기본값 10
         ChangeConditionToNext();
     }
 
@@ -132,29 +156,49 @@ public class StateManager : MonoBehaviour
         // 랜덤 디스크 1개 설정
         SelectRandomTargetDiskNumber();
 
-        // reference color 불러오기
+        // reference color 불러오기 DKL
+        // switch (currentReferenceColorState)
+        // {
+        //     case ReferenceColorState.ReferenceColor1:
+        //         referenceColorInDKL = colorManager.referenceColorsDKL[0];
+        //         break;
+        //     case ReferenceColorState.ReferenceColor2:
+        //         referenceColorInDKL = colorManager.referenceColorsDKL[1];
+        //         break;
+        //     case ReferenceColorState.ReferenceColor3:
+        //         referenceColorInDKL = colorManager.referenceColorsDKL[2];
+        //         break;
+        //     case ReferenceColorState.ReferenceColor4:
+        //         referenceColorInDKL = colorManager.referenceColorsDKL[3];
+        //         break;
+        //     case ReferenceColorState.ReferenceColor5:
+        //         referenceColorInDKL = colorManager.referenceColorsDKL[4];
+        //         break;
+        // }
+        // reference color 불러오기 RGB
         switch (currentReferenceColorState)
         {
             case ReferenceColorState.ReferenceColor1:
-                referenceColorInDKL = colorManager.referenceColorsDKL[0];
+                referenceColorInDKL = colorManager.referenceColorsRGB[0];
                 break;
             case ReferenceColorState.ReferenceColor2:
-                referenceColorInDKL = colorManager.referenceColorsDKL[1];
+                referenceColorInDKL = colorManager.referenceColorsRGB[1];
                 break;
             case ReferenceColorState.ReferenceColor3:
-                referenceColorInDKL = colorManager.referenceColorsDKL[2];
+                referenceColorInDKL = colorManager.referenceColorsRGB[2];
                 break;
             case ReferenceColorState.ReferenceColor4:
-                referenceColorInDKL = colorManager.referenceColorsDKL[3];
+                referenceColorInDKL = colorManager.referenceColorsRGB[3];
                 break;
             case ReferenceColorState.ReferenceColor5:
-                referenceColorInDKL = colorManager.referenceColorsDKL[4];
+                referenceColorInDKL = colorManager.referenceColorsRGB[4];
                 break;
         }
-        Vector3 referenceColorInRGB = colorManager.DKLtoRGB(referenceColorInDKL);
+        Vector3 referenceColorInRGB = referenceColorInDKL;
 
         // target color 계산
-        targetColorInRGB = colorManager.DKLtoRGB(colorManager.CalculateTargetColor(referenceColorInDKL));
+        // targetColorInRGB = colorManager.DKLtoRGB(colorManager.CalculateTargetColor(referenceColorInDKL));
+        targetColorInRGB = colorManager.CalculateTargetColorTestRGB(referenceColorInRGB, currentDimensionState, difficulty); // DKL이 아니라 RGB로 테스트할 때는 이 메소드 사용할 것.
 
         // ref mat에 색 입히기
         colorManager.SetMaterialColor(colorManager.referenceMaterial, new Vector3(referenceColorInRGB.x / 255, referenceColorInRGB.y / 255, referenceColorInRGB.z / 255));
@@ -199,7 +243,7 @@ public class StateManager : MonoBehaviour
         // 5초 대기/남은 시간 보여주기
         for (int i = 0; i < 5; i++)
         {
-            startText.text = $"Start in {5 - i}";
+            gameText.text = $"Start in {5 - i}";
             yield return new WaitForSeconds(1f);
         }
 
@@ -237,7 +281,7 @@ public class StateManager : MonoBehaviour
             case GameState.InGame:
                 // 게임 진행으로 변경 시 실행 로직
                 Debug.Log("Game State : In Game");
-                startText.gameObject.SetActive(false);
+                gameText.gameObject.SetActive(false);
 
                 break;
             case GameState.Pause:
@@ -246,8 +290,8 @@ public class StateManager : MonoBehaviour
                 break;
             case GameState.End:
                 // 게임 종료로 변경 시 실행 로직
-                startText.gameObject.SetActive(true);
-                startText.text = "Finished";
+                gameText.gameObject.SetActive(true);
+                gameText.text = "Finished";
                 break;
         }
     }
@@ -360,14 +404,14 @@ public class StateManager : MonoBehaviour
     // 키보드 입력에 따른 정답 저장 및 ProcessAnswer 실행
     void HandleDiskSelection()
     {
-        if (Input.GetKeyDown(KeyCode.A))
+        if (Input.GetKeyDown(KeyCode.B))
         {
             Debug.Log("(StateManage.cs/HandleDiskSelection)Disk 1 as answer");
             ProcessAnswer(1);
             ChangeGameState(GameState.InGame);
             isAnswered = true;
         }
-        else if (Input.GetKeyDown(KeyCode.S))
+        else if (Input.GetKeyDown(KeyCode.E))
         {
             Debug.Log("(StateManage.cs/HandleDiskSelection)Disk 2 as answer");
             ProcessAnswer(2);
@@ -375,7 +419,7 @@ public class StateManager : MonoBehaviour
             isAnswered = true;
 
         }
-        else if (Input.GetKeyDown(KeyCode.Z))
+        else if (Input.GetKeyDown(KeyCode.A))
         {
             Debug.Log("(StateManage.cs/HandleDiskSelection)Disk 3 as answer");
             ProcessAnswer(3);
@@ -383,7 +427,7 @@ public class StateManager : MonoBehaviour
             isAnswered = true;
 
         }
-        else if (Input.GetKeyDown(KeyCode.X))
+        else if (Input.GetKeyDown(KeyCode.D))
         {
             Debug.Log("(StateManage.cs/HandleDiskSelection)Disk 4 as answer");
             ProcessAnswer(4);
@@ -400,12 +444,14 @@ public class StateManager : MonoBehaviour
             Debug.Log("(ProcessAnswer)Correct Answer");
             isRight = true;
             difficulty++;
+            Debug.Log($"Difficulty is now {difficulty}");
         }
         else
         {
             Debug.Log("(ProcessAnswer)Wrong Answer");
             isRight = false;
             difficulty--;
+            Debug.Log($"Difficulty is now {difficulty}");
         }
         // Reversal up or down
         ProcessReversal(isRight);
@@ -423,7 +469,10 @@ public class StateManager : MonoBehaviour
         {
             reversalCount++;
         }
+
+        previousAnswerCorrect = currentAnswerCorrect;
     }
+
 
     /**
     정답 처리 메소드 끝
@@ -433,13 +482,13 @@ public class StateManager : MonoBehaviour
     void SaveToCSV(int answer, bool isCorrect)
     {
         // CSV 파일에 데이터 저장 로직
-        string newDataLine = $"{trialNumber};{referenceColorInDKL};{currentEccentricityState};{currentDimensionState};{targetColorInRGB};{currentTargetDiskNumber()};{answer};{Convert.ToInt16(isCorrect)};{reversalCount}";
+        string newDataLine = $"{trialNumber};{referenceColorInDKL};{currentEccentricityState};{currentDimensionState};{targetColorInRGB};{currentTargetDiskNumber()};{answer};{Convert.ToInt16(isCorrect)};{difficulty};{reversalCount}";
 
         // 파일이 없으면 새로 만들고, 있으면 데이터 추가
         if (!File.Exists(csvFilePath) || isFirstEntry)
         {
             isFirstEntry = false;
-            File.WriteAllText(csvFilePath, "Trial No.;ReferenceColorInRGB;Eccentricity;ChangedDimension;TargetColorInRGB;TargetDisk;Answer;IsCorrect;resersalCount\n");
+            File.WriteAllText(csvFilePath, "Trial No.;ReferenceColorInRGB;Eccentricity;ChangedDimension;TargetColorInRGB;TargetDisk;Answer;IsCorrect;Difficulty;resersalCount\n");
         }
 
         File.AppendAllText(csvFilePath, newDataLine + "\n");
