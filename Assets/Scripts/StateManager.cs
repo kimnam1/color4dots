@@ -251,7 +251,6 @@ public class StateManager : MonoBehaviour
         }
 
         DeactivateDiskManagers();
-
     }
 
     // 5초 대기 후 실험 시작 메소드
