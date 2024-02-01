@@ -11,6 +11,10 @@ public class ColorManager : MonoBehaviour
     // 조정할 값(10퍼센트에 해당하는 값)
     public float adjustValueDKLX;
     public float adjustValueDKLY;
+    private float DKLxUpperLimit = 255.0f;
+    private float DKLxBottomLimit = 0.0f;
+    private float DKLyUpperLimit = 200.0f;
+    private float DKLyBottomLimit = -200.0f;
 
     // 색 입힐 Materials
     public Material referenceMaterial;
@@ -135,6 +139,7 @@ public class ColorManager : MonoBehaviour
 
         return rgb2dkl.MultiplyVector(rgb);
     }
+    
     public Vector3 DKLCarttoRGBbyPsychoPy(Vector3 dkl)
     {
         Matrix4x4 dkl2rgb = new Matrix4x4();
@@ -146,27 +151,27 @@ public class ColorManager : MonoBehaviour
         return dkl2rgb.MultiplyVector(dkl);
     }
 
+
     public Vector3 CalculateTargetColor(Vector3 referenceColor, DimensionState dimensionState, int difficulty)
     {
-        float defaultDifficultyValueInDKLX = 20.4f; // L-M dimension에서 최대값에서 최소값 뺀 전체 범위의 12.5%를 기본 난이도로 잡음. 
-        float defaultDifficultyValueInDKLY = 32.0f; // S-(L+M) dimension에서 최대값에서 최소값 뺀 전체 범위의 12.5%를 기본 난이도로 잡음.
-        float difficultyStepValueInDKLX = 2.55f; // 50단계로 나누기 위해서 기본 난이도의 1/50으로 한단계 난이도 정함
-        float difficultyStepValueInDKLY = 4.0f; // 50단계로 나누기 위해서 기본 난이도의 1/50으로 한단계 난이도 정함
-
-
-
-        float difficultyAppliedValueX = defaultDifficultyValueInDKLX - ((difficulty - 50) * difficultyStepValueInDKLX);
-        float difficultyAppliedValueY = defaultDifficultyValueInDKLY - ((difficulty - 50) * difficultyStepValueInDKLY);
-
-
-
-
-
+        float defaultDifficultyStepValueDKLx = 2.55f; // L-M dimension에서 최대값에서 최소값 뺀 전체의 1%를 기본 step value로 잡음
+        float defaultDifficultyStepValueDKLy = 4f; // S-(L+M) dimension에서 최대값에서 최소값 뺀 전체의 1%를 기본 step value로 잡음
 
         Vector3 adjustedColor = new Vector3(0f, 0f, 0f);
 
         if (dimensionState == DimensionState.xPositive)
         {
+            float defaultDifficultyValue = (DKLxUpperLimit + referenceColor[0])/2; // X+의 Upper Limit에서 현재 Reference Color X 구간의 중간
+            
+            if (difficulty > 50){
+                float difficultyStepValue = defaultDifficultyValue / 50; // X+의 Upper Limit에서 현재 Reference Color X 값 뺀 구간을 50으로 나눔 = 1%
+            }
+            else{
+                float difficultyStepValue = defaultDifficultyStepValueDKLx; // 2.55f 씩 늘어남.
+            }
+
+            float difficultyAppliedValue = defaultDifficultyValue - (difficultyStepValue * (difficulty - 50));
+
             adjustedColor = new Vector3(
                 referenceColor.x + difficultyAppliedValueX,
                 referenceColor.y,
@@ -201,6 +206,7 @@ public class ColorManager : MonoBehaviour
         Debug.Log("(ColorManager.cs/CalculateTargetColor)Calculate Target Color: Target Color is " + adjustedColor);
         return adjustedColor;
     }
+
     public Vector3 CalculateTargetColorTestRGB(Vector3 referenceColor, DimensionState dimensionState, int difficulty)
     {
         float adjustValueInRGB = 256f * 25 / 100; // RGB의 기본 난이도 25%
