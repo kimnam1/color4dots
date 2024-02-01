@@ -13,8 +13,10 @@ using UnityEngine.Rendering;
 
 public class StateManager : MonoBehaviour
 {
+    [Header("Scripts")]
     // Scripts
     public ColorManager colorManager; // Color Manager Script 불러오기
+
 
     // Enum 상태 추적 변수
     private GameState currentGameState; // 현재 게임 상태를 추적하는 변수
@@ -23,10 +25,13 @@ public class StateManager : MonoBehaviour
     private TargetDisk currentTargetDisk; // 현재 target(정답) disk
     private DimensionState currentDimensionState; // 현재 변경할 color space 축 상태를 추적하는 변수
 
+    [Header("Experiment Setting")]
     // Experiment Setting
-    public int numberOfTrialsPerEccentricity; // 하나의 시야각 당 진행할 trial 수 설정. 나중에는 필요없음.
     [SerializeField] private float diskShowingTime = 0.5f; // Disk Showing Time(Unity의 Inspector창에서 조절할 것) 기본값 0.5초
+    public int maxTrialPerCondition = 50; // 1 Condition 당 최대 Trial 수
+    public int maxReversalPerCondition = 3; // 1 condition 당 최대 reversal 수
 
+    [Header("Materials")]
     // Material to apply
     public Material referenceMaterial;
     public Material targetMaterial;
@@ -35,6 +40,7 @@ public class StateManager : MonoBehaviour
     private Vector3 referenceColorInDKL;
     private Vector3 targetColorInRGB;
 
+    [Header("Game Objects")]
     // Game Objects
     [SerializeField] private TMP_Text gameText; // 시작 텍스트
     [SerializeField] private GameObject diskManager_Eccentricity10; // Disk Manager Object - 10 Eccentricity
@@ -43,18 +49,16 @@ public class StateManager : MonoBehaviour
     [SerializeField] private TMP_Text answerText; // 답 나오는 텍스트. Test 용
     [SerializeField] private TMP_Text debugText; // Debug용 텍스트
 
-
     // Trial 상태 변수
     private int trialNumber = 1; // Trial 번호. CSV 저장용
     private int reversalCount; // 현재 reversal count
     private int currentConditionTrialCompleted = 0; // Eccentricity 별 현재 진행된 trial 수
     private bool isAnswered; // 답변 들어왔는지 파악하는 bool
-    private int maxTrial = 50; // 1 Condition 당 최대 Trial 수
-    private int maxReversal = 3; // 1 condition 당 최대 reversal 수
     private bool isRight; // 맞았는지 틀렸는지 파악하는 bool
     private bool previousAnswerCorrect; // 전단계 정답 여부 bool. reversalCount에 필요.
 
     // 난이도 변수
+    public int defaultDifficulty = 50;
     private int difficulty = 50;
     private bool isConditionFirst = true;
 
@@ -151,7 +155,7 @@ public class StateManager : MonoBehaviour
     // Condition 별 실험 실행 메소드
     IEnumerator RunSingleCondition()
     {
-        while (reversalCount < maxReversal && currentConditionTrialCompleted < maxTrial)
+        while (reversalCount < maxReversalPerCondition && currentConditionTrialCompleted < maxTrialPerCondition)
         {
             Debug.Log($"Current Condition Trial Completed: {currentConditionTrialCompleted}");
             isAnswered = false; // 시작 전 isAnswered False
@@ -179,50 +183,51 @@ public class StateManager : MonoBehaviour
         SelectRandomTargetDiskNumber();
 
         // reference color 불러오기 DKL
-        // switch (currentReferenceColorState)
-        // {
-        //     case ReferenceColorState.ReferenceColor1:
-        //         referenceColorInDKL = colorManager.referenceColorsDKL[0];
-        //         break;
-        //     case ReferenceColorState.ReferenceColor2:
-        //         referenceColorInDKL = colorManager.referenceColorsDKL[1];
-        //         break;
-        //     case ReferenceColorState.ReferenceColor3:
-        //         referenceColorInDKL = colorManager.referenceColorsDKL[2];
-        //         break;
-        //     case ReferenceColorState.ReferenceColor4:
-        //         referenceColorInDKL = colorManager.referenceColorsDKL[3];
-        //         break;
-        //     case ReferenceColorState.ReferenceColor5:
-        //         referenceColorInDKL = colorManager.referenceColorsDKL[4];
-        //         break;
-        // }
-        // reference color 불러오기 RGB
         switch (currentReferenceColorState)
         {
             case ReferenceColorState.ReferenceColor1:
-                referenceColorInDKL = colorManager.referenceColorsRGB[0];
+                referenceColorInDKL = colorManager.referenceColorsDKL[0];
                 break;
             case ReferenceColorState.ReferenceColor2:
-                referenceColorInDKL = colorManager.referenceColorsRGB[1];
+                referenceColorInDKL = colorManager.referenceColorsDKL[1];
                 break;
             case ReferenceColorState.ReferenceColor3:
-                referenceColorInDKL = colorManager.referenceColorsRGB[2];
+                referenceColorInDKL = colorManager.referenceColorsDKL[2];
                 break;
             case ReferenceColorState.ReferenceColor4:
-                referenceColorInDKL = colorManager.referenceColorsRGB[3];
+                referenceColorInDKL = colorManager.referenceColorsDKL[3];
                 break;
             case ReferenceColorState.ReferenceColor5:
-                referenceColorInDKL = colorManager.referenceColorsRGB[4];
+                referenceColorInDKL = colorManager.referenceColorsDKL[4];
                 break;
         }
-        Vector3 referenceColorInRGB = referenceColorInDKL;
+        // reference color 불러오기 RGB
+        // switch (currentReferenceColorState)
+        // {
+        //     case ReferenceColorState.ReferenceColor1:
+        //         referenceColorInDKL = colorManager.referenceColorsRGB[0];
+        //         break;
+        //     case ReferenceColorState.ReferenceColor2:
+        //         referenceColorInDKL = colorManager.referenceColorsRGB[1];
+        //         break;
+        //     case ReferenceColorState.ReferenceColor3:
+        //         referenceColorInDKL = colorManager.referenceColorsRGB[2];
+        //         break;
+        //     case ReferenceColorState.ReferenceColor4:
+        //         referenceColorInDKL = colorManager.referenceColorsRGB[3];
+        //         break;
+        //     case ReferenceColorState.ReferenceColor5:
+        //         referenceColorInDKL = colorManager.referenceColorsRGB[4];
+        //         break;
+        // }
+
+        Vector3 referenceColorInRGB = colorManager.DKLCarttoRGBbyPsychoPy(referenceColorInDKL);
 
         // target color 계산
-        // targetColorInRGB = colorManager.DKLtoRGB(colorManager.CalculateTargetColor(referenceColorInDKL));
-        targetColorInRGB = colorManager.CalculateTargetColorTestRGB(referenceColorInRGB, currentDimensionState, difficulty); // DKL이 아니라 RGB로 테스트할 때는 이 메소드 사용할 것.
+        targetColorInRGB = colorManager.DKLCarttoRGBbyPsychoPy(colorManager.CalculateTargetColor(referenceColorInDKL, currentDimensionState, difficulty));
+        // targetColorInRGB = colorManager.CalculateTargetColorTestRGB(referenceColorInRGB, currentDimensionState, difficulty); // DKL이 아니라 RGB로 테스트할 때는 이 메소드 사용할 것.
 
-        // ref mat에 색 입히기
+        // ref mat에 색 입히기22
         colorManager.SetMaterialColor(colorManager.referenceMaterial, new Vector3(referenceColorInRGB.x / 255, referenceColorInRGB.y / 255, referenceColorInRGB.z / 255));
         Debug.Log("(RunSigleTrial)Reference Color: " + referenceColorInRGB + " is applied to material");
 

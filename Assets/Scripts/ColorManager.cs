@@ -26,11 +26,11 @@ public class ColorManager : MonoBehaviour
         referenceColorsDKL = new List<Vector3>();
 
         // Reference Color 선언
-        referenceColorsDKL.Add(new Vector3(100.0f, 0.0f, 100.0f));
-        referenceColorsDKL.Add(new Vector3(-119.8981253f, -348.1355644f, 370.4842407f));
-        referenceColorsDKL.Add(new Vector3(1.06440418f, 237.1414263f, 12.88814752f));
-        referenceColorsDKL.Add(new Vector3(-26.30661874f, -464.681383f, 492.4826335f));
-        referenceColorsDKL.Add(new Vector3(100.0f, 200.0f, 100.0f));
+        referenceColorsDKL.Add(new Vector3(127f, -0.5f, 0f));
+        referenceColorsDKL.Add(new Vector3(63.5f, -0.5f, 0f));
+        referenceColorsDKL.Add(new Vector3(190.5f, -0.5f, 0f));
+        referenceColorsDKL.Add(new Vector3(127f, -100.25f, 0f));
+        referenceColorsDKL.Add(new Vector3(127f, 99.25f, 0f));
 
         // RGB 리스트 초기화
         referenceColorsRGB = new List<Vector3>();
@@ -51,6 +51,8 @@ public class ColorManager : MonoBehaviour
     {
 
     }
+
+
     public Vector3 RGBtoXYZ(Vector3 rgb)
     {
         Matrix4x4 rgb2xyz = new Matrix4x4();
@@ -116,30 +118,93 @@ public class ColorManager : MonoBehaviour
         Debug.Log("(ColorManager.cs)DKL " + xyz + " is Changed to RGB!!" + ", RGB:" + XYZtoRGB(LMStoXYZ(DKLtoLMS(xyz))));
         return XYZtoRGB(LMStoXYZ(DKLtoLMS(xyz)));
     }
-
     public Vector3 RGBtoDKL(Vector3 rgb)
     {
         Debug.Log("(ColorManager.cs)RGB " + rgb + "is Changed to DKL!!" + ", DKL:" + LMStoDKL(XYZtoLMS(RGBtoXYZ(rgb))));
         return LMStoDKL(XYZtoLMS(RGBtoXYZ(rgb)));
     }
 
-    public Vector3 CalculateTargetColor(Vector3 referenceColor)
-    {
-        adjustValueDKLX = 10f;
-        adjustValueDKLY = 0.0f;
 
-        Vector3 adjustedColor = new Vector3(
-            referenceColor.x - adjustValueDKLX,
-            referenceColor.y,
-            referenceColor.z
-        );
+    public Vector3 RGBtoDKLCartbyPsychoPy(Vector3 rgb)
+    {
+        Matrix4x4 rgb2dkl = new Matrix4x4();
+        rgb2dkl.SetRow(0, new Vector4(0.25145542f, 0.64933633f, 0.09920825f, 0));
+        rgb2dkl.SetRow(1, new Vector4(0.78737943f, -0.55586618f, -0.23151325f, 0));
+        rgb2dkl.SetRow(2, new Vector4(0.26562825f, 0.63933074f, -0.90495899f, 0));
+        rgb2dkl.SetRow(3, new Vector4(0, 0, 0, 1));
+
+        return rgb2dkl.MultiplyVector(rgb);
+    }
+    public Vector3 DKLCarttoRGBbyPsychoPy(Vector3 dkl)
+    {
+        Matrix4x4 dkl2rgb = new Matrix4x4();
+        dkl2rgb.SetRow(0, new Vector4(1.0f, 0.999999998f, -0.146199995f, 0));
+        dkl2rgb.SetRow(1, new Vector4(1.0f, -0.389999999f, 0.209400005f, 0));
+        dkl2rgb.SetRow(2, new Vector4(1.0f, 0.018f, -0.999999998f, 0));
+        dkl2rgb.SetRow(3, new Vector4(0, 0, 0, 1));
+
+        return dkl2rgb.MultiplyVector(dkl);
+    }
+
+    public Vector3 CalculateTargetColor(Vector3 referenceColor, DimensionState dimensionState, int difficulty)
+    {
+        float defaultDifficultyValueInDKLX = 20.4f; // L-M dimension에서 최대값에서 최소값 뺀 전체 범위의 12.5%를 기본 난이도로 잡음. 
+        float defaultDifficultyValueInDKLY = 32.0f; // S-(L+M) dimension에서 최대값에서 최소값 뺀 전체 범위의 12.5%를 기본 난이도로 잡음.
+        float difficultyStepValueInDKLX = 2.55f; // 50단계로 나누기 위해서 기본 난이도의 1/50으로 한단계 난이도 정함
+        float difficultyStepValueInDKLY = 4.0f; // 50단계로 나누기 위해서 기본 난이도의 1/50으로 한단계 난이도 정함
+
+
+
+        float difficultyAppliedValueX = defaultDifficultyValueInDKLX - ((difficulty - 50) * difficultyStepValueInDKLX);
+        float difficultyAppliedValueY = defaultDifficultyValueInDKLY - ((difficulty - 50) * difficultyStepValueInDKLY);
+
+
+
+
+
+
+        Vector3 adjustedColor = new Vector3(0f, 0f, 0f);
+
+        if (dimensionState == DimensionState.xPositive)
+        {
+            adjustedColor = new Vector3(
+                referenceColor.x + difficultyAppliedValueX,
+                referenceColor.y,
+                referenceColor.z
+                );
+        }
+        else if (dimensionState == DimensionState.xNegative)
+        {
+            adjustedColor = new Vector3(
+                referenceColor.x - difficultyAppliedValueX,
+                referenceColor.y,
+                referenceColor.z
+                );
+        }
+        else if (dimensionState == DimensionState.yPositive)
+        {
+            adjustedColor = new Vector3(
+                referenceColor.x,
+                referenceColor.y + difficultyAppliedValueY,
+                referenceColor.z
+                );
+        }
+        else if (dimensionState == DimensionState.yNegative)
+        {
+            adjustedColor = new Vector3(
+                referenceColor.x,
+                referenceColor.y - difficultyAppliedValueY,
+                referenceColor.z
+                );
+
+        }
         Debug.Log("(ColorManager.cs/CalculateTargetColor)Calculate Target Color: Target Color is " + adjustedColor);
         return adjustedColor;
     }
     public Vector3 CalculateTargetColorTestRGB(Vector3 referenceColor, DimensionState dimensionState, int difficulty)
     {
         float adjustValueInRGB = 256f * 25 / 100; // RGB의 기본 난이도 25%
-        float difficultyStepValueInRGB = 256f * 25 / 100 / 50;// 기본 Difficulty 50에 전체 0~100이니까 Difficulty 한단계 당 난이도 25%의 1/50 = 1/2%
+        float difficultyStepValueInRGB = 256f * 25 / 100 / stateManager.defaultDifficulty;// 기본 Difficulty 50에 전체 0~100이니까 Difficulty 한단계 당 난이도 25%의 1/50 = 1/2%
         float difficultyAppliedValue = adjustValueInRGB - ((difficulty - 50) * difficultyStepValueInRGB);
         Vector3 adjustedColor = new Vector3(0f, 0f, 255f); // 기본 파란색. 아래 switch 제대로 실행 안되면 파란색으로 보이게
 
