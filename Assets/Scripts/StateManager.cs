@@ -81,7 +81,7 @@ public class StateManager : MonoBehaviour
     void Update()
     {
         //Debug용 정보
-        debugText.text = $"Trial Info\nDifficulty: {difficulty}\nEccen.: {currentEccentricityState}\nRef Color: {referenceMaterial.color}\nTargetColor: {targetMaterial.color}";
+        debugText.text = $"Trial Info\nDifficulty: {difficulty}\nEccen.: {currentEccentricityState}\nRef Color: {referenceMaterial.color}\nTargetColor: {targetMaterial.color}\nDKL: ";
         switch (currentTargetDisk)
         {
             case TargetDisk.Disk1:

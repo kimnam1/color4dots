@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using JetBrains.Annotations;
@@ -30,10 +31,10 @@ public class ColorManager : MonoBehaviour
         referenceColorsDKL = new List<Vector3>();
 
         // Reference Color 선언
-        referenceColorsDKL.Add(new Vector3(127f, -0.5f, 0f));
+        referenceColorsDKL.Add(new Vector3(127f, -100.25f, 0f));
         referenceColorsDKL.Add(new Vector3(63.5f, -0.5f, 0f));
         referenceColorsDKL.Add(new Vector3(190.5f, -0.5f, 0f));
-        referenceColorsDKL.Add(new Vector3(127f, -100.25f, 0f));
+        referenceColorsDKL.Add(new Vector3(127f, -0.5f, 0f));
         referenceColorsDKL.Add(new Vector3(127f, 99.25f, 0f));
 
         // RGB 리스트 초기화
@@ -139,7 +140,7 @@ public class ColorManager : MonoBehaviour
 
         return rgb2dkl.MultiplyVector(rgb);
     }
-    
+
     public Vector3 DKLCarttoRGBbyPsychoPy(Vector3 dkl)
     {
         Matrix4x4 dkl2rgb = new Matrix4x4();
@@ -157,48 +158,74 @@ public class ColorManager : MonoBehaviour
         float defaultDifficultyStepValueDKLx = 2.55f; // L-M dimension에서 최대값에서 최소값 뺀 전체의 1%를 기본 step value로 잡음
         float defaultDifficultyStepValueDKLy = 4f; // S-(L+M) dimension에서 최대값에서 최소값 뺀 전체의 1%를 기본 step value로 잡음
 
-        Vector3 adjustedColor = new Vector3(0f, 0f, 0f);
+        Vector3 adjustedColor = new(0f, 0f, 0f);
 
         if (dimensionState == DimensionState.xPositive)
         {
-            float defaultDifficultyValue = (DKLxUpperLimit + referenceColor[0])/2; // X+의 Upper Limit에서 현재 Reference Color X 구간의 중간
-            
-            if (difficulty > 50){
-                float difficultyStepValue = defaultDifficultyValue / 50; // X+의 Upper Limit에서 현재 Reference Color X 값 뺀 구간을 50으로 나눔 = 1%
+            float defaultDifficultyValue = Math.Abs(DKLxUpperLimit - referenceColor[0]) / 2; // X+의 Upper Limit에서 현재 Reference Color X 구간의 절반값
+            float difficultyStepValue = defaultDifficultyStepValueDKLx; // 기본 2.55f 씩 늘어남.
+            if (difficulty > 50)
+            {
+                difficultyStepValue = defaultDifficultyValue / 50; // X+의 Upper Limit에서 현재 Reference Color X 값 뺀 구간을 50으로 나눔 = 1%. Ref Color와 가까워지는 방향이면 1%씩 움직여서 ref color를 넘어가는 일이 없도록 
             }
-            else{
-                float difficultyStepValue = defaultDifficultyStepValueDKLx; // 2.55f 씩 늘어남.
-            }
-
+            // 난이도가 반영된 차이값
             float difficultyAppliedValue = defaultDifficultyValue - (difficultyStepValue * (difficulty - 50));
 
             adjustedColor = new Vector3(
-                referenceColor.x + difficultyAppliedValueX,
+                referenceColor.x + difficultyAppliedValue,
                 referenceColor.y,
                 referenceColor.z
                 );
         }
         else if (dimensionState == DimensionState.xNegative)
         {
+            float defaultDifficultyValue = Math.Abs(DKLxBottomLimit - referenceColor[0]) / 2; // Bottom Limit에서 현재 Reference Color X 구간의 절반값
+            float difficultyStepValue = defaultDifficultyStepValueDKLx; // 기본 2.55f 씩 늘어남.
+            if (difficulty > 50)
+            {
+                difficultyStepValue = defaultDifficultyValue / 50; // 기본 난이도 차이값을 50으로 나눠서 적용. reference color와 가까워지는 방향이면 ref color를 넘어가는 일이 없도록
+            }
+            // 난이도가 반영된 차이값
+            float difficultyAppliedValue = defaultDifficultyValue - (difficultyStepValue * (difficulty - 50));
+
             adjustedColor = new Vector3(
-                referenceColor.x - difficultyAppliedValueX,
+                referenceColor.x - difficultyAppliedValue,
                 referenceColor.y,
                 referenceColor.z
                 );
         }
         else if (dimensionState == DimensionState.yPositive)
         {
+            float defaultDifficultyValue = Math.Abs(DKLyUpperLimit - referenceColor[1]) / 2;// Upper Limit에서 현재 reference Color y 구간의 절반값
+            float difficultyStepValue = defaultDifficultyStepValueDKLy;
+            if (difficulty > 50)
+            {
+                difficultyStepValue = defaultDifficultyValue / 50; // 기본 난이도 차이 값을 50으로 나눔. 50단계에서 ref color와 가까워지는 방향이면 ref color를 넘어가는 일이 없도록
+            }
+            // 난이도가 반영된 차이값
+            float difficultyAppliedValue = defaultDifficultyValue - (difficultyStepValue * (difficulty - 50));
+
             adjustedColor = new Vector3(
                 referenceColor.x,
-                referenceColor.y + difficultyAppliedValueY,
+                referenceColor.y + difficultyAppliedValue,
                 referenceColor.z
                 );
         }
         else if (dimensionState == DimensionState.yNegative)
         {
+            float defaultDifficultyValue = Math.Abs(DKLyBottomLimit - referenceColor[1]) / 2;// bottom Limit에서 현재 reference Color y 구간의 절반값
+            float difficultyStepValue = defaultDifficultyStepValueDKLy;
+            if (difficulty > 50)
+            {
+                difficultyStepValue = defaultDifficultyValue / 50; // 기본 난이도 차이 값을 50으로 나눔. 50단계에서 ref color와 가까워지는 방향이면 ref color를 넘어가는 일이 없도록
+            }
+
+            // 난이도가 반영된 차이값
+            float difficultyAppliedValue = defaultDifficultyValue - (difficultyStepValue * (difficulty - 50));
+
             adjustedColor = new Vector3(
                 referenceColor.x,
-                referenceColor.y - difficultyAppliedValueY,
+                referenceColor.y - difficultyAppliedValue,
                 referenceColor.z
                 );
 
