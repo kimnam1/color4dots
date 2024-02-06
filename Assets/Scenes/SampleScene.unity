@@ -1357,7 +1357,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   colorManager: {fileID: 73185113}
   currentReferenceColorState: 0
-  diskShowingTime: 0.5
+  diskShowingTime: 10
   maxTrialPerCondition: 50
   maxReversalPerCondition: 3
   referenceMaterial: {fileID: 2100000, guid: eff6d7934e6524557a8e65c0a7d6864d, type: 2}
