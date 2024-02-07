@@ -532,6 +532,7 @@ public class StateManager : MonoBehaviour
     }
 
 
+
     // Disk 처리 메소드
     void SelectRandomTargetDiskNumber()
     {
