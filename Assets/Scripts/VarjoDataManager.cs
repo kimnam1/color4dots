@@ -18,8 +18,13 @@ public class VarjoDataManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        //파일 이름 정하기
         string fileName = "RawData_" + GetFormattedDateTime() + ".csv";
-        csvFilePath = Application.dataPath + "/CSV/EyeData/" + System.DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss") + ".csv";
+        // Path.Combine 설명하는 주석
+        // Application.dataPath : Assets 폴더의 경로
+        // "CSV" : CSV 폴더의 경로
+        // fileName : 파일 이름
+        csvFilePath = Path.Combine(Application.dataPath, "CSV", fileName);
         if (!File.Exists(csvFilePath))
         {
             File.WriteAllText(csvFilePath, $"Frame No.;Task Count;Gaze_x;Gaze_y;Gaze_z;Head_x;Head_y;Head_z");
