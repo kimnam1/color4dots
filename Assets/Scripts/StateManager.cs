@@ -19,7 +19,7 @@ public class StateManager : MonoBehaviour
 
 
     // Enum 상태 추적 변수
-    private GameState currentGameState; // 현재 게임 상태를 추적하는 변수
+    public GameState currentGameState; // 현재 게임 상태를 추적하는 변수
     private EccentricityState currentEccentricityState; // 현재 이심률 상태를 추적하는 변수
     public ReferenceColorState currentReferenceColorState; // 현재 reference color 추적하는 변수
     private TargetDisk currentTargetDisk; // 현재 target(정답) disk
@@ -48,9 +48,10 @@ public class StateManager : MonoBehaviour
     [SerializeField] private GameObject diskManager_Eccentricity35;// Disk Manager Object - 35 Eccentricity
     [SerializeField] private TMP_Text answerText; // 답 나오는 텍스트. Test 용
     [SerializeField] private TMP_Text debugText; // Debug용 텍스트
+    [SerializeField] private GameObject gazeDestination; // 쳐다봐야 하는 곳.
 
     // Trial 상태 변수
-    private int trialNumber = 1; // Trial 번호. CSV 저장용
+    public int trialNumber = 1; // Trial 번호. CSV 저장용
     private int reversalCount; // 현재 reversal count
     private int currentConditionTrialCompleted = 0; // Eccentricity 별 현재 진행된 trial 수
     private bool isAnswered; // 답변 들어왔는지 파악하는 bool
@@ -605,8 +606,6 @@ public class StateManager : MonoBehaviour
                 break;
         }
     }
-
-
 
     public EccentricityState GetCurrentEccentricityState()
     {
