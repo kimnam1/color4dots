@@ -31,10 +31,10 @@ public class ColorManager : MonoBehaviour
         referenceColorsDKL = new List<Vector3>();
 
         // Reference Color 선언
+        referenceColorsDKL.Add(new Vector3(127f, -0.5f, 0f));
         referenceColorsDKL.Add(new Vector3(127f, -100.25f, 0f));
         referenceColorsDKL.Add(new Vector3(63.5f, -0.5f, 0f));
         referenceColorsDKL.Add(new Vector3(190.5f, -0.5f, 0f));
-        referenceColorsDKL.Add(new Vector3(127f, -0.5f, 0f));
         referenceColorsDKL.Add(new Vector3(127f, 99.25f, 0f));
 
         // RGB 리스트 초기화

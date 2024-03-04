@@ -16,6 +16,7 @@ public class StateManager : MonoBehaviour
     [Header("Scripts")]
     // Scripts
     public ColorManager colorManager; // Color Manager Script 불러오기
+    public GazeRayHitChecker gazeRayHitChecker; // GazeRayHitChecker Script 불러오기
 
 
     // Enum 상태 추적 변수
@@ -379,9 +380,14 @@ public class StateManager : MonoBehaviour
     {
         currentDimensionState = dimensionState;
 
+        targetMaterial.SetInteger("dimension", (int)currentDimensionState);
+
         Debug.Log($"Dimension is Changed to {currentDimensionState}");
+        Degub.Log($"Integer for currentDimensionState is {(int)currentDimensionState}");
+        
         StartCoroutine(RunSingleCondition());
     }
+
     public void ChangeDimensionStateToNext()
     {
         switch (currentDimensionState)
@@ -478,6 +484,10 @@ public class StateManager : MonoBehaviour
             difficulty--;
             Debug.Log($"Difficulty is now {difficulty}");
         }
+
+        // Material에 난이도 적용 = Shader의 difficulty 값 적용.
+        targetMaterial.SetInteger("difficulty", difficulty);
+
         // Reversal up or down
         ProcessReversal(isRight);
 
@@ -487,6 +497,7 @@ public class StateManager : MonoBehaviour
         // 다음 시행을 위한 상태 변경
         trialNumber++;
     }
+
     // reversal process 메소드
     void ProcessReversal(bool currentAnswerCorrect)
     {
@@ -503,7 +514,6 @@ public class StateManager : MonoBehaviour
 
         previousAnswerCorrect = currentAnswerCorrect;
     }
-
 
     /**
     정답 처리 메소드 끝
